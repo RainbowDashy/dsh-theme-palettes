@@ -14,12 +14,6 @@ Then restart the web server so the new composition row enters the boot graph:
 dsh web
 ```
 
-That is the whole install. What happens under the hood:
-
-1. `dsh plugin add` forwards to `pnpm add` inside the profile directory (`$DSH_HOME/profiles/web`), so the package lands in the profile's `node_modules`. The generated artifacts are committed, so nothing builds at install time — pnpm's build-script gate never triggers.
-2. Because `package.json` declares a `dsh.bundle` patch, `dsh plugin` reconciles the package into the profile's `dsh.profile.bundles` layer stack — no manual `cordis.patch.yml` editing.
-3. On the next start, that patch layer inserts the plugin's own row, the host-side `client-modules` scan picks up the `dsh.client` declaration, and the browser mounts the bundle from `/plugins/dsh-theme-palettes/client.js`.
-
 The plugin does **not** register into the harness theme registry and never calls `setTheme` — the harness Appearance picker (light/dark/system) is not extensible by third parties. Palettes are applied through a single `theme.overrideTokens` layer instead (see [Usage](#usage)).
 
 - Pin a branch or tag: `"github:RainbowDashy/dsh-theme-palettes#main"`.
