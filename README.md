@@ -23,7 +23,7 @@ The plugin does **not** register into the harness theme registry and never calls
 
 This package never touches the Appearance picker and never registers a theme id there. Instead it maps the **resolved** color scheme onto a palette via one `theme.overrideTokens` layer.
 
-To pick palettes, open **Settings → Plugins → Configurable**, expand the **Theme palettes** card, and set the **Light appearance uses** and **Dark appearance uses** dropdowns. Changes apply live and persist across restarts (see [Settings](#settings)).
+To pick palettes, open **Settings → Plugins → Plugin Configuration**, expand the **Theme palettes** card, and set the **Light appearance uses** and **Dark appearance uses** dropdowns. Changes apply live and persist across restarts (see [Settings](#settings)).
 
 - Both **dark** and **light** appearances stay on the stock (`default`) palette by default.
 - **System** resolves to light or dark via the OS and re-fires when the OS scheme flips.
@@ -90,7 +90,7 @@ The full token maps (89 tokens per Solarized palette; 87 for VSCode Red, which l
 
 ## Settings
 
-The mapping UI lives on the Settings → **Plugins** → **Configurable** page as a **"Theme palettes"** card. Like the section's other plugin cards it starts collapsed — expand it with the header button. It contains:
+The mapping UI lives on the Settings → **Plugins** → **Plugin Configuration** page as a **"Theme palettes"** card. Like the section's other plugin cards it starts collapsed — expand it with the header button. It contains:
 
 - **Light appearance uses** — a dropdown offering `Default` plus every registered palette.
 - **Dark appearance uses** — a dropdown offering `Default` plus every registered palette.
