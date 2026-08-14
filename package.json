@@ -1,7 +1,7 @@
 {
-  "name": "dsh-theme-vscode-red",
-  "version": "1.0.0",
-  "description": "VSCode \"Red\" dark theme for DeepSeek Harness — deep maroon surfaces with a red accent, ported from the VSCode Red color theme.",
+  "name": "dsh-theme-palettes",
+  "version": "0.1.0",
+  "description": "Palette infrastructure for DeepSeek Harness: scheme-mapped theme palettes with built-in VSCode Red and a third-party registration API",
   "type": "module",
   "main": "index.js",
   "exports": {
@@ -14,11 +14,15 @@
     "client.js",
     "cordis.patch.yml",
     "src/client.js",
+    "src/palettes.js",
+    "src/settings.js",
     "build.mjs",
+    "test.mjs",
     "README.md"
   ],
   "scripts": {
     "build": "node build.mjs",
+    "test": "node test.mjs",
     "prepublishOnly": "node build.mjs"
   },
   "license": "MIT",
@@ -27,9 +31,9 @@
     "dsh",
     "cordis",
     "theme",
+    "palette",
     "vscode",
-    "red",
-    "dark"
+    "red"
   ],
   "dsh": {
     "client": {
