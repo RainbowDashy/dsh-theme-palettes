@@ -1,0 +1,35 @@
+{
+  "name": "dsh-theme-vscode-red",
+  "version": "1.0.0",
+  "description": "VSCode \"Red\" dark theme for DeepSeek Harness — deep maroon surfaces with a red accent, ported from the VSCode Red color theme.",
+  "type": "module",
+  "main": "client.js",
+  "exports": {
+    ".": "./client.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "client.js",
+    "README.md"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "cordis",
+    "theme",
+    "vscode",
+    "red",
+    "dark"
+  ],
+  "dsh": {
+    "client": {
+      "platform": "web",
+      "immediately": true
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1"
+  }
+}
