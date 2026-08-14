@@ -12,6 +12,7 @@ window.__ModuleLoader__.load({
     const SETTINGS_NAMESPACE = "theme-palettes";
     const LAYER_SOURCE = "theme-palettes";
     const DEFAULT_MAPPING = {"dark":"vscode-red","light":"default"};
+    const HTTP_ROUTE = "/api/theme-palettes";
     const PALETTES = [{"id":"vscode-red","label":"VSCode Red","tokens":{"--dsw-alias-bg-base":"#390000","--dsw-alias-bg-layer-1":"#330000","--dsw-alias-bg-layer-2":"#300000","--dsw-alias-bg-layer-3":"#490000","--dsw-alias-bg-mask-1":"rgba(48, 0, 0, 0.55)","--dsw-alias-bg-mask-2":"rgba(48, 0, 0, 0.28)","--dsw-alias-bg-mask-3":"rgba(40, 0, 0, 0.55)","--dsw-alias-bg-mask-photo":"rgba(24, 0, 0, 0.9)","--dsw-alias-bg-mask-drop":"rgba(48, 0, 0, 0.72)","--dsw-alias-bg-module-platform":"#580000","--dsw-alias-bg-multi-select":"#490000","--dsw-alias-bg-overlay":"#580000","--dsw-alias-bg-skeleton":"rgba(255, 120, 120, 0.10)","--dsw-alias-border-inverted2":"rgba(255, 102, 102, 0.16)","--dsw-alias-border-inverted":"rgba(255, 102, 102, 0.12)","--dsw-alias-border-l1":"rgba(255, 102, 102, 0.14)","--dsw-alias-border-l2-darkmode-thin":"rgba(255, 102, 102, 0.10)","--dsw-alias-border-l2":"rgba(255, 102, 102, 0.22)","--dsw-alias-border-l3":"rgba(255, 102, 102, 0.30)","--dsw-alias-border-l4":"rgba(255, 102, 102, 0.40)","--dsw-alias-brand-primary-invert":"#f8f8f8","--dsw-alias-brand-primary-new-colorprimary-new-color":"#cc3333","--dsw-alias-brand-primary":"#cc3333","--dsw-alias-brand-text":"#f8f8f8","--dsw-alias-button-contrast-fill":"#cc3333","--dsw-alias-button-elevated-fill":"#700000","--dsw-alias-button-floating-fill":"#490000","--dsw-alias-button-floating-hover":"#580000","--dsw-alias-button-ghost-active-border":"#ff6666","--dsw-alias-button-ghost-active-fill":"#700000","--dsw-alias-button-ghost-active-hover":"#800000","--dsw-alias-button-info-fill":"#cc3333","--dsw-alias-button-info-hover":"#dd4444","--dsw-alias-button-primary-dimmed":"#700000","--dsw-alias-button-primary-fill":"#cc3333","--dsw-alias-button-primary-hover":"#dd4444","--dsw-alias-button-tool-bar-fill-invisible":"rgba(72, 0, 0, 0.36)","--dsw-alias-button-tool-bar-fill":"rgba(104, 0, 0, 0.55)","--dsw-alias-button-tool-bar-hover":"rgba(120, 0, 0, 0.6)","--dsw-alias-interactive-bg-active":"rgba(255, 102, 102, 0.16)","--dsw-alias-interactive-bg-hover-accent":"rgba(255, 102, 102, 0.26)","--dsw-alias-interactive-bg-hover-danger":"rgba(242, 90, 90, 0.18)","--dsw-alias-interactive-bg-hover-solid":"#580000","--dsw-alias-interactive-bg-hover":"rgba(255, 102, 102, 0.10)","--dsw-alias-label-caption":"#e7c0c0","--dsw-alias-label-dimmed":"#d4a0a0","--dsw-alias-label-primary-bluish":"#f8f8f8","--dsw-alias-label-primary-dimmed":"#f0c8c8","--dsw-alias-label-primary-foreground":"#ffffff","--dsw-alias-label-primary-inverted":"#330000","--dsw-alias-label-primary":"#f8f8f8","--dsw-alias-label-secondary":"#ffbbbb","--dsw-alias-label-tertiary":"#cc9999","--dsw-alias-markdown-citation":"#580000","--dsw-alias-markdown-code-block-banner":"#490000","--dsw-alias-markdown-code-block":"#300000","--dsw-alias-markdown-code-segment-selected":"#580000","--dsw-alias-markdown-code-segment-unselected":"#300000","--dsw-alias-markdown-inline-code":"#490000","--dsw-alias-markdown-placeholder":"#490000","--dsw-alias-markdown-tag":"#490000","--dsw-alias-scrollbar-bg-l1":"#700000","--dsw-alias-scrollbar-bg-l2":"#880000","--dsw-alias-scrollbar-hover-l1":"#880000","--dsw-alias-scrollbar-hover-l2":"#990000","--dsw-alias-state-business-primary":"#cc3333","--dsw-alias-state-business-tertiary":"#580000","--dsw-alias-state-error-primary":"#f14c4c","--dsw-alias-state-error-secondary":"#f48771","--dsw-alias-state-success-primary":"#89d185","--dsw-alias-state-success-secondary":"#89d185","--dsw-alias-state-warn-label":"#cca700","--dsw-alias-state-warn-primary":"#cca700","--dsw-alias-state-warn-secondary":"#cca700","--dsw-alias-toast-bg":"#700000","--dsw-alias-tooltip-bg":"#700000","--dsw-specific-bubble-highlight":"#700000","--dsw-specific-bubble":"#490000","--dsw-specific-input-major":"#580000","--dsw-specific-login-input":"#300000","--dsw-specific-menu":"#580000","--dsw-specific-selector":"#883333","--dsw-specific-sidebar-fill":"#330000","--dsw-specific-sidebar-nav-item-active-accent":"#580000","--dsw-specific-sidebar-nav-item-active":"#700000","--dsw-specific-sidebar-nav-item-hover":"#490000","--dsw-specific-tip":"#580000"}}];
 
     function apply(ctx) {
@@ -68,57 +69,141 @@ window.__ModuleLoader__.load({
     registry.set(palette.id, { id: palette.id, label: palette.label, tokens: palette.tokens, builtIn: true })
   }
 
-  // Provide the public service (disposer owned by the fiber).
-  ctx.effect(() => ctx.provide(SERVICE_NAME, { registerPalette, list }))
-
   // ---- Durable scheme → palette mapping ------------------------------------
-  const scope = ctx.get('settingsScope')?.bind({ namespace: SETTINGS_NAMESPACE })
+  // The harness's settings WIRE serves only a hardcoded namespace allowlist
+  // (`settings-not-exposed` for third-party namespaces), so the mapping cannot
+  // go through the standard settings scope. Persistence runs through this
+  // package's own HTTP route, which reads and writes the same user settings
+  // document on the Host through the Host settings seam.
+  const store = {
+    status: 'loading', // 'loading' | 'ready' | 'unavailable'
+    value: { ...DEFAULT_MAPPING },
+    revision: undefined,
+    writable: false,
+  }
+  const storeListeners = new Set()
+  function subscribeStore(fn) {
+    storeListeners.add(fn)
+    return () => storeListeners.delete(fn)
+  }
+  function notifyStore() {
+    for (const fn of [...storeListeners]) fn()
+  }
 
   function getMapping() {
-    const section = scope ? scope.getSnapshot().value : undefined
-    return {
-      dark: section?.dark ?? DEFAULT_MAPPING.dark,
-      light: section?.light ?? DEFAULT_MAPPING.light,
+    return { ...store.value }
+  }
+
+  function applyServerView(data) {
+    store.status = 'ready'
+    store.value = {
+      dark: data && typeof data.value?.dark === 'string' ? data.value.dark : DEFAULT_MAPPING.dark,
+      light: data && typeof data.value?.light === 'string' ? data.value.light : DEFAULT_MAPPING.light,
+    }
+    store.revision = data && typeof data.revision === 'number' ? data.revision : undefined
+    store.writable = data?.writable === true
+    notifyStore()
+  }
+
+  async function loadMapping() {
+    try {
+      const response = await fetch(HTTP_ROUTE, { cache: 'no-store' })
+      if (!response.ok) {
+        if (store.status !== 'unavailable') {
+          store.status = 'unavailable'
+          notifyStore()
+        }
+        return
+      }
+      applyServerView(await response.json())
+    } catch {
+      if (store.status !== 'unavailable') {
+        store.status = 'unavailable'
+        notifyStore()
+      }
     }
   }
 
   function setMapping(scheme, id) {
-    if (scope) scope.set(scheme, id)
+    if (getMapping()[scheme] === id) return
+    // Optimistic: reflect the choice immediately; the write round-trip (or a
+    // conflict recovery read) reconciles the authoritative value.
+    store.value = { ...store.value, [scheme]: id }
+    notifyStore()
+    fetch(HTTP_ROUTE, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        ops: [{ op: 'set', path: [scheme], value: id }],
+        ...(store.revision === undefined ? {} : { expectedRevision: store.revision }),
+      }),
+    }).then(async (response) => {
+      if (!response.ok) {
+        await loadMapping()
+        return
+      }
+      applyServerView(await response.json())
+    }).catch(() => {
+      loadMapping().catch(() => {})
+    })
   }
+
+  // Provide the public service (disposer owned by the fiber). The mapping
+  // accessors are the programmatic counterpart of the settings card.
+  ctx.effect(() => ctx.provide(SERVICE_NAME, {
+    registerPalette,
+    list,
+    getMapping,
+    setMapping,
+  }))
 
   // ---- Resolution ----------------------------------------------------------
   let disposeLayer = null
   let lastApplied = null // { scheme, paletteId }
+  // Re-entrancy guard: overrideTokens and layer disposal publish a new
+  // snapshot and emit theme/change SYNCHRONOUSLY, so a resolve that mutates
+  // the theme re-enters this function through its own listener before
+  // `lastApplied` is updated. Without the guard every non-noop resolve
+  // re-applies itself until the stack overflows (observed live: the palette
+  // survived a scheme switch and the next switch threw "Maximum call stack
+  // size exceeded").
+  let resolving = false
 
   function resolve() {
-    const scheme = theme.getTheme().active.colorScheme
-    const mapping = getMapping()
-    const target = mapping[scheme] ?? DEFAULT_MAPPING[scheme]
-    // Fail-soft: an unknown palette id behaves exactly like 'default'.
-    const paletteId = target === 'default' || !registry.has(target) ? 'default' : target
+    if (resolving) return
+    resolving = true
+    try {
+      const scheme = theme.getTheme().active.colorScheme
+      const mapping = getMapping()
+      const target = mapping[scheme] ?? DEFAULT_MAPPING[scheme]
+      // Fail-soft: an unknown palette id behaves exactly like 'default'.
+      const paletteId = target === 'default' || !registry.has(target) ? 'default' : target
 
-    // Echo guard: skip no-op re-applies.
-    if (lastApplied && lastApplied.scheme === scheme && lastApplied.paletteId === paletteId) {
-      return
-    }
-
-    if (paletteId === 'default') {
-      if (disposeLayer) {
-        disposeLayer()
-        disposeLayer = null
+      // Echo guard: skip no-op re-applies.
+      if (lastApplied && lastApplied.scheme === scheme && lastApplied.paletteId === paletteId) {
+        return
       }
-    } else {
-      const palette = registry.get(paletteId)
-      const pairs = {}
-      for (const [name, value] of Object.entries(palette.tokens)) {
-        pairs[name] = { light: value, dark: value }
-      }
-      // overrideTokens REPLACES the previous layer with the same source, so a
-      // palette switch needs no explicit dispose first.
-      disposeLayer = theme.overrideTokens(LAYER_SOURCE, pairs)
-    }
 
-    lastApplied = { scheme, paletteId }
+      if (paletteId === 'default') {
+        if (disposeLayer) {
+          disposeLayer()
+          disposeLayer = null
+        }
+      } else {
+        const palette = registry.get(paletteId)
+        const pairs = {}
+        for (const [name, value] of Object.entries(palette.tokens)) {
+          pairs[name] = { light: value, dark: value }
+        }
+        // overrideTokens REPLACES the previous layer with the same source, so a
+        // palette switch needs no explicit dispose first.
+        disposeLayer = theme.overrideTokens(LAYER_SOURCE, pairs)
+      }
+
+      lastApplied = { scheme, paletteId }
+    } finally {
+      resolving = false
+    }
   }
 
   // ---- Settings-UI change notifications ------------------------------------
@@ -132,20 +217,40 @@ window.__ModuleLoader__.load({
   }
 
   // ---- Triggers ------------------------------------------------------------
-  // theme/change (preference or resolved scheme change) re-resolves.
-  ctx.on('theme/change', resolve)
+  // theme/change (preference or resolved scheme change) re-resolves. The
+  // resolution mutates the theme, which synchronously emits another
+  // theme/change; running it on a microtask lets the CURRENT emit's listener
+  // pass finish first, so listeners registered after this plugin (the layout
+  // theme presenter) paint the post-resolution snapshot instead of the stale
+  // pre-resolution one.
+  ctx.on('theme/change', () => {
+    Promise.resolve().then(resolve)
+  })
 
   // Mapping echo guard: only re-resolve when the mapping actually changed.
   let lastMappingKey = JSON.stringify(getMapping())
-  if (scope) {
-    ctx.effect(() => scope.subscribe(() => {
-      const key = JSON.stringify(getMapping())
-      if (key === lastMappingKey) return
-      lastMappingKey = key
-      resolve()
-      notifySettings()
+  ctx.effect(() => subscribeStore(() => {
+    const key = JSON.stringify(getMapping())
+    if (key === lastMappingKey) return
+    lastMappingKey = key
+    resolve()
+    notifySettings()
+  }))
+
+  // Server-side changes (this package's route or another browser) invalidate
+  // the local copy through the forwarded settings-document event.
+  const remote = ctx.get('remote')
+  if (remote) {
+    ctx.effect(() => remote.$on('settings/document-updated', (ns) => {
+      if (ns !== SETTINGS_NAMESPACE) return
+      loadMapping()
     }))
   }
+  ctx.on('connection/reset', () => {
+    loadMapping()
+  })
+  // Initial read; the store starts from the defaults while it is in flight.
+  loadMapping()
 
   // Registry changes (register/dispose) re-resolve and refresh the settings UI.
   ctx.effect(() => onRegistryChange(() => {
@@ -163,23 +268,26 @@ window.__ModuleLoader__.load({
   const slots = ctx.get('slots')
   if (slots) {
     registerPaletteSettings(slots, {
-      subscribe: subscribeSettings,
+      subscribe: subscribeStore,
       getMapping,
       setMapping,
       getPalettes: () => list(),
+      getStatus: () => store.status,
       getActiveScheme: () => theme.getTheme().active.colorScheme,
     })
   }
 }
 
     function registerPaletteSettings(slots, deps) {
-  function Section() {
+  function Card() {
     const [mapping, setMapping] = React.useState(() => deps.getMapping())
     const [palettes, setPalettes] = React.useState(() => deps.getPalettes())
+    const [status, setStatus] = React.useState(() => deps.getStatus())
 
     React.useEffect(() => deps.subscribe(() => {
       setMapping(deps.getMapping())
       setPalettes(deps.getPalettes())
+      setStatus(deps.getStatus())
     }), [])
 
     // Build one dropdown's option set. A mapping id that no longer resolves to
@@ -200,7 +308,7 @@ window.__ModuleLoader__.load({
     const change = (scheme, value) => {
       deps.setMapping(scheme, value)
       // Optimistically reflect the choice; the subscription reconciles with
-      // the authoritative mapping once the settings write round-trips.
+      // the authoritative mapping once the write round-trips.
       setMapping((prev) => ({ ...prev, [scheme]: value }))
     }
 
@@ -238,19 +346,21 @@ window.__ModuleLoader__.load({
     }
 
     return React.createElement('div', null,
-      React.createElement('h2', null, 'Theme palettes'),
+      React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '8px' } },
+        React.createElement('h3', null, 'Theme palettes'),
+        status !== 'ready' ? React.createElement('span', null, 'not persisted') : null
+      ),
       renderSelect('Dark appearance uses', 'dark'),
       renderSelect('Light appearance uses', 'light'),
       React.createElement('div', null, palettes.map(renderCatalogRow))
     )
   }
 
-  slots.inject('settings.section', () => slots.register({
-    name: 'settings.section',
-    id: 'palettes',
-    order: 1,
-    label: () => 'Theme palettes',
-  }, Section))
+  slots.inject('settings.plugin.item', () => slots.register({
+    name: 'settings.plugin.item',
+    id: 'theme-palettes',
+    order: 30,
+  }, Card))
 }
 
     exports.inject = inject;

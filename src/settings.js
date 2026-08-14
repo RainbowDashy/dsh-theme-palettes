@@ -1,19 +1,25 @@
-// dsh-theme-palettes — settings section UI.
+// dsh-theme-palettes — plugin configuration card UI.
 //
 // Authored as ESM but never executed directly in the browser: `build.mjs`
 // inlines the `registerPaletteSettings` function source into the generated
 // client bundle. `React` is therefore a FREE identifier here — the factory
 // declares `const React = require("react")` before this source, so do NOT
-// import it. Everything else the section needs comes from `deps`.
+// import it. Everything else the card needs comes from `deps`.
+//
+// The card lives in the Plugin configuration section (the harness's home for
+// plugin-owned settings). It closes over `deps` directly: the section's
+// registrant inject face is not needed.
 
 export function registerPaletteSettings(slots, deps) {
-  function Section() {
+  function Card() {
     const [mapping, setMapping] = React.useState(() => deps.getMapping())
     const [palettes, setPalettes] = React.useState(() => deps.getPalettes())
+    const [status, setStatus] = React.useState(() => deps.getStatus())
 
     React.useEffect(() => deps.subscribe(() => {
       setMapping(deps.getMapping())
       setPalettes(deps.getPalettes())
+      setStatus(deps.getStatus())
     }), [])
 
     // Build one dropdown's option set. A mapping id that no longer resolves to
@@ -34,7 +40,7 @@ export function registerPaletteSettings(slots, deps) {
     const change = (scheme, value) => {
       deps.setMapping(scheme, value)
       // Optimistically reflect the choice; the subscription reconciles with
-      // the authoritative mapping once the settings write round-trips.
+      // the authoritative mapping once the write round-trips.
       setMapping((prev) => ({ ...prev, [scheme]: value }))
     }
 
@@ -72,17 +78,19 @@ export function registerPaletteSettings(slots, deps) {
     }
 
     return React.createElement('div', null,
-      React.createElement('h2', null, 'Theme palettes'),
+      React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '8px' } },
+        React.createElement('h3', null, 'Theme palettes'),
+        status !== 'ready' ? React.createElement('span', null, 'not persisted') : null
+      ),
       renderSelect('Dark appearance uses', 'dark'),
       renderSelect('Light appearance uses', 'light'),
       React.createElement('div', null, palettes.map(renderCatalogRow))
     )
   }
 
-  slots.inject('settings.section', () => slots.register({
-    name: 'settings.section',
-    id: 'palettes',
-    order: 1,
-    label: () => 'Theme palettes',
-  }, Section))
+  slots.inject('settings.plugin.item', () => slots.register({
+    name: 'settings.plugin.item',
+    id: 'theme-palettes',
+    order: 30,
+  }, Card))
 }

@@ -16,6 +16,8 @@
     "src/client.js",
     "src/palettes.js",
     "src/settings.js",
+    "src/host.js",
+    "src/host-schema.js",
     "build.mjs",
     "test.mjs",
     "README.md"
@@ -43,6 +45,9 @@
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "^3.18.1"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1"

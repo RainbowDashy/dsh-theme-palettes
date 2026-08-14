@@ -79,13 +79,14 @@ Because the palette is layered over the active theme via `overrideTokens`, it wi
 
 ## Settings
 
-A new **"Theme palettes"** section appears in Settings, containing:
+The mapping UI lives on the Settings → **Plugins** → **Configurable** page as a **"Theme palettes"** card, containing:
 
 - **Dark appearance uses** — a dropdown offering `Default` plus every registered palette.
 - **Light appearance uses** — a dropdown offering `Default` plus every registered palette.
 - A **catalog** list showing each palette's color chip, label, id, and a built-in/third-party marker.
+- A "not persisted" hint while the host-side persistence surface is unavailable.
 
-The mapping persists as a flat section of the user's settings document:
+Changes apply live and persist as a flat section of the user's settings document (`$DSH_HOME/settings.yaml`):
 
 ```jsonc
 {
@@ -97,6 +98,14 @@ The mapping persists as a flat section of the user's settings document:
 ```
 
 Defaults are `dark: vscode-red`, `light: default`. A value referencing an unregistered id behaves as `default` and is shown as "(unavailable)" in the dropdown.
+
+### Why a private route instead of the settings wire?
+
+The harness's browser settings **wire** (`settings.describe` / `settings.mutate`) serves only a hardcoded namespace allowlist (`WEB_SETTINGS_NAMESPACES` in `dsh-host-apiproxy`) and refuses third-party namespaces with `settings-not-exposed` — exposing a registered namespace is deferred harness work. This package therefore persists through its own HTTP surface instead:
+
+- The **host half** registers the `theme-palettes` namespace on the host settings seam (so writes land in the same user settings document as first-party namespaces) and serves a private route, `GET/POST /api/theme-palettes`, backed by that seam.
+- The **browser half** reads and writes that route and refreshes through the forwarded `settings/document-updated` event, so changes from another browser or from the host stay live.
+- The route runs on the same webserver and origin as the harness UI (loopback-only deployment is unchanged: settings are host-local in that shape, exactly like the standard settings RPC).
 
 ## Third-party authors
 
@@ -130,8 +139,10 @@ A palette is pure data. Register it through the `themePalettes` service:
 Hand-edited sources live in `src/`:
 
 - [`src/palettes.js`](./src/palettes.js) — the palette catalog (built-in `vscode-red` and helpers).
-- [`src/client.js`](./src/client.js) — the runtime: the `themePalettes` service and the override layer.
-- [`src/settings.js`](./src/settings.js) — the "Theme palettes" settings-section UI.
+- [`src/client.js`](./src/client.js) — the runtime: the `themePalettes` service, the mapping store, and the override layer.
+- [`src/settings.js`](./src/settings.js) — the "Theme palettes" plugin-configuration card UI.
+- [`src/host.js`](./src/host.js) — the host half: settings-namespace registration plus the `/api/theme-palettes` route.
+- [`src/host-schema.js`](./src/host-schema.js) — the dependency-free namespace contract (schema, route, op validation).
 
 Regenerate the artifacts with:
 
@@ -142,7 +153,7 @@ node build.mjs   # or: npm run build
 This rewrites three generated files:
 
 - `client.js` — the `./client` export: the factory bundle (`window.__ModuleLoader__.load`) the shell loads as a classic script; raw ESM would be a SyntaxError there.
-- `index.js` — the no-op host half; keeps the composition row's host fiber active so the `client-modules` scan qualifies the package.
+- `index.js` — the host half, inlined from `src/host.js` + `src/host-schema.js` with its schemastery import preserved.
 - `cordis.patch.yml` — the `dsh.bundle` patch layer that inserts the row.
 
 Run the stub-based contract tests with:
