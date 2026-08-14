@@ -21,9 +21,11 @@ The plugin does **not** register into the harness theme registry and never calls
 
 ## Usage
 
-This package never touches the Appearance picker and never registers a theme id there. Instead it maps the **resolved** color scheme onto a palette via one `theme.overrideTokens` layer:
+This package never touches the Appearance picker and never registers a theme id there. Instead it maps the **resolved** color scheme onto a palette via one `theme.overrideTokens` layer.
 
-- Both **dark** and **light** appearances stay on the stock (`default`) palette by default; opt into a palette per scheme from the settings card.
+To pick palettes, open **Settings → Plugins → Configurable**, expand the **Theme palettes** card, and set the **Light appearance uses** and **Dark appearance uses** dropdowns. Changes apply live and persist across restarts (see [Settings](#settings)).
+
+- Both **dark** and **light** appearances stay on the stock (`default`) palette by default.
 - **System** resolves to light or dark via the OS and re-fires when the OS scheme flips.
 - Changing the Appearance preference (light/dark/system) re-maps the palette immediately.
 - A mapping that references an unregistered id is fail-soft: it behaves as `default`.
