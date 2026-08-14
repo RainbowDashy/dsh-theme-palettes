@@ -84,10 +84,13 @@ On activation the plugin registers a theme with id `vscode-red` and applies it
 immediately. It then appears in the **Appearance** picker. Stopping the plugin
 reverts the preference.
 
-Because `apply` re-selects `vscode-red` on every page load, the theme wins
-over a preference picked in Appearance until the plugin is removed. To make
-it opt-in instead, drop the `setTheme` call and pick it from the Appearance
-picker.
+Because `apply` layers the palette over the active theme via `overrideTokens`,
+the red palette wins per-token for as long as the plugin is loaded — the
+durable `light`/`dark` preference cannot take it back (the harness never
+persists custom theme ids, so a boot-time `setTheme()` call alone would be
+overwritten when the settings scope syncs). To make it opt-in instead, drop
+the `overrideTokens` call (and optionally the `setTheme` call) and pick
+`vscode-red` from the Appearance picker.
 
 ## Development
 

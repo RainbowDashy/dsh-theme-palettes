@@ -14,6 +14,10 @@ export const inject = ['theme']
 
 export const THEME_ID = 'vscode-red'
 
+// Identity of the override layer this plugin stacks over the active theme
+// (theme.overrideTokens source).
+export const OVERRIDE_SOURCE = 'dsh-theme-vscode-red'
+
 // Neutral-dark ("blackish") scale remapped onto the VSCode Red theme's
 // dark-red scale, where dark red replaces black. Values are drawn from the
 // reference theme: editor #390000, sidebar #330000, widgets #300000,
@@ -134,15 +138,29 @@ export function apply(ctx) {
   // until the built-in theme service (ui-theme) provides itself.
   const theme = ctx.theme
 
+  // 1. Register a selectable theme so it shows in Settings → Appearance.
   const dispose = theme.register({
     id: THEME_ID,
     colorScheme: 'dark',
     tokens: TOKENS,
   })
-
-  // Own the disposer so the theme is removed cleanly on plugin stop/update.
   ctx.effect(() => dispose)
 
-  // Activate immediately so the result is visible on load.
+  // 2. Force the palette with a token override layer. The durable preference
+  // (light/dark/system) is adopted by ui-theme when the settings scope syncs,
+  // and custom theme ids are deliberately not persisted, so a boot-time
+  // setTheme() call alone loses the race and the page snaps back to the stock
+  // palette. An override layer sits ABOVE whichever theme is active, so the
+  // palette holds for the lifetime of the plugin with no preference fighting.
+  const overrideTokens = {}
+  for (const [name, value] of Object.entries(TOKENS)) {
+    overrideTokens[name] = { light: value, dark: value }
+  }
+  const disposeOverride = theme.overrideTokens(OVERRIDE_SOURCE, overrideTokens)
+  ctx.effect(() => disposeOverride)
+
+  // 3. Also select the registered theme so the Appearance picker reflects it
+  // whenever the preference sticks; the override layer keeps the palette
+  // regardless.
   theme.setTheme(THEME_ID)
 }

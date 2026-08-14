@@ -25,7 +25,7 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { THEME_ID, TOKENS, inject, apply } from './src/client.js'
+import { THEME_ID, TOKENS, OVERRIDE_SOURCE, inject, apply } from './src/client.js'
 
 const root = dirname(fileURLToPath(import.meta.url))
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
@@ -44,6 +44,7 @@ window.__ModuleLoader__.load({
     Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
     const inject = ${JSON.stringify(inject)};
     const THEME_ID = ${JSON.stringify(THEME_ID)}
+    const OVERRIDE_SOURCE = ${JSON.stringify(OVERRIDE_SOURCE)}
     const TOKENS = ${JSON.stringify(TOKENS, null, 2)}
 
     ${apply}
@@ -51,6 +52,7 @@ window.__ModuleLoader__.load({
     exports.inject = inject;
     exports.apply = apply;
     exports.THEME_ID = THEME_ID;
+    exports.OVERRIDE_SOURCE = OVERRIDE_SOURCE;
     exports.TOKENS = TOKENS;
     return module.exports;
   }

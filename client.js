@@ -8,6 +8,7 @@ window.__ModuleLoader__.load({
     Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
     const inject = ["theme"];
     const THEME_ID = "vscode-red"
+    const OVERRIDE_SOURCE = "dsh-theme-vscode-red"
     const TOKENS = {
   "--dsw-alias-bg-base": "#390000",
   "--dsw-alias-bg-layer-1": "#330000",
@@ -103,22 +104,37 @@ window.__ModuleLoader__.load({
   // until the built-in theme service (ui-theme) provides itself.
   const theme = ctx.theme
 
+  // 1. Register a selectable theme so it shows in Settings → Appearance.
   const dispose = theme.register({
     id: THEME_ID,
     colorScheme: 'dark',
     tokens: TOKENS,
   })
-
-  // Own the disposer so the theme is removed cleanly on plugin stop/update.
   ctx.effect(() => dispose)
 
-  // Activate immediately so the result is visible on load.
+  // 2. Force the palette with a token override layer. The durable preference
+  // (light/dark/system) is adopted by ui-theme when the settings scope syncs,
+  // and custom theme ids are deliberately not persisted, so a boot-time
+  // setTheme() call alone loses the race and the page snaps back to the stock
+  // palette. An override layer sits ABOVE whichever theme is active, so the
+  // palette holds for the lifetime of the plugin with no preference fighting.
+  const overrideTokens = {}
+  for (const [name, value] of Object.entries(TOKENS)) {
+    overrideTokens[name] = { light: value, dark: value }
+  }
+  const disposeOverride = theme.overrideTokens(OVERRIDE_SOURCE, overrideTokens)
+  ctx.effect(() => disposeOverride)
+
+  // 3. Also select the registered theme so the Appearance picker reflects it
+  // whenever the preference sticks; the override layer keeps the palette
+  // regardless.
   theme.setTheme(THEME_ID)
 }
 
     exports.inject = inject;
     exports.apply = apply;
     exports.THEME_ID = THEME_ID;
+    exports.OVERRIDE_SOURCE = OVERRIDE_SOURCE;
     exports.TOKENS = TOKENS;
     return module.exports;
   }
