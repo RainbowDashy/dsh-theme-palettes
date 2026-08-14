@@ -79,11 +79,11 @@ Because the palette is layered over the active theme via `overrideTokens`, it wi
 
 ## Settings
 
-The mapping UI lives on the Settings → **Plugins** → **Configurable** page as a **"Theme palettes"** card, containing:
+The mapping UI lives on the Settings → **Plugins** → **Configurable** page as a **"Theme palettes"** card. Like the section's other plugin cards it starts collapsed — expand it with the header button. It contains:
 
-- **Dark appearance uses** — a dropdown offering `Default` plus every registered palette.
 - **Light appearance uses** — a dropdown offering `Default` plus every registered palette.
-- A **catalog** list showing each palette's color chip, label, id, and a built-in/third-party marker.
+- **Dark appearance uses** — a dropdown offering `Default` plus every registered palette.
+- A **catalog** list showing each palette's two-tone preview (base + accent), label, id, and a built-in/third-party marker.
 - A "not persisted" hint while the host-side persistence surface is unavailable.
 
 Changes apply live and persist as a flat section of the user's settings document (`$DSH_HOME/settings.yaml`):
@@ -128,7 +128,7 @@ A palette is pure data. Register it through the `themePalettes` service:
 }
 ```
 
-- `registerPalette({ id, label, tokens })` returns a disposer; `list()` returns `[{ id, label, builtIn, swatch }]` (`swatch` is the palette's `--dsw-alias-bg-base` value, for catalog chips).
+- `registerPalette({ id, label, tokens })` returns a disposer; `list()` returns `[{ id, label, builtIn, swatch, accent }]` (`swatch` is the palette's `--dsw-alias-bg-base` value and `accent` its `--dsw-alias-brand-primary`, falling back to the base — together they feed the settings catalog's two-tone preview tile).
 - Duplicate ids **throw** — pick a unique id.
 - Namespace ids with your package name (e.g. `my-package/ocean`) to avoid collisions.
 - Dynamic session-scoped plugins can also register palettes.

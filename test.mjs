@@ -255,7 +255,7 @@ await run('built-in palette registered, listed, and applied', () => {
   const { theme, slots, service } = setup()
 
   assert(service, 'themePalettes service provided')
-  assertEq(service.list(), [{ id: 'vscode-red', label: 'VSCode Red', builtIn: true, swatch: '#390000' }], 'built-in listed with builtIn: true and swatch')
+  assertEq(service.list(), [{ id: 'vscode-red', label: 'VSCode Red', builtIn: true, swatch: '#390000', accent: '#cc3333' }], 'built-in listed with builtIn: true, swatch, and accent')
 
   assertEq(theme._calls.length, 1, 'exactly one override layer applied on init')
   assertEq(theme._calls[0].source, 'theme-palettes', 'override layer source')
@@ -459,11 +459,11 @@ await run('third-party registerPalette works and list reflects it', () => {
   const { service } = setup({ scheme: 'dark' })
   const dispose = service.registerPalette({ id: 'blue', label: 'Blue', tokens: { '--dsw-alias-bg-base': '#0000ff' } })
   assertEq(service.list(), [
-    { id: 'vscode-red', label: 'VSCode Red', builtIn: true, swatch: '#390000' },
-    { id: 'blue', label: 'Blue', builtIn: false, swatch: '#0000ff' },
-  ], 'third-party palette listed after built-in with builtIn: false and swatch')
+    { id: 'vscode-red', label: 'VSCode Red', builtIn: true, swatch: '#390000', accent: '#cc3333' },
+    { id: 'blue', label: 'Blue', builtIn: false, swatch: '#0000ff', accent: '#0000ff' },
+  ], 'third-party palette listed after built-in with builtIn: false, swatch, and accent (falls back to base)')
   dispose()
-  assertEq(service.list(), [{ id: 'vscode-red', label: 'VSCode Red', builtIn: true, swatch: '#390000' }], 'disposing removes the palette')
+  assertEq(service.list(), [{ id: 'vscode-red', label: 'VSCode Red', builtIn: true, swatch: '#390000', accent: '#cc3333' }], 'disposing removes the palette')
 })
 
 // ---- result -----------------------------------------------------------------

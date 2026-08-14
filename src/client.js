@@ -55,9 +55,11 @@ export function apply(ctx) {
         id: entry.id,
         label: entry.label,
         builtIn: entry.builtIn,
-        // One representative color for catalog chips; 'transparent' when the
-        // palette does not set the base-background token.
+        // Two representative colors for the settings card's two-tone preview
+        // tile: the base background and the brand accent (falling back to the
+        // base). 'transparent' when the palette sets neither token.
         swatch: entry.tokens['--dsw-alias-bg-base'] ?? 'transparent',
+        accent: entry.tokens['--dsw-alias-brand-primary'] ?? entry.tokens['--dsw-alias-bg-base'] ?? 'transparent',
       }
       if (entry.builtIn) builtIn.push(item)
       else thirdParty.push(item)
