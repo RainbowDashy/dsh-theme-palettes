@@ -7,8 +7,9 @@
 // `window.__ModuleLoader__.load`), so keep the exports and the package name in
 // sync with build.mjs.
 //
-// The plugin provides a `themePalettes` service (a palette registry with a
-// built-in VSCode Red palette) and a runtime core that maps the resolved color
+// The plugin provides a `themePalettes` service (a palette registry with
+// built-in VSCode Red, Solarized Dark, and Solarized Light palettes) and a
+// runtime core that maps the resolved color
 // scheme (light/dark) to a palette id via a persisted mapping (host-backed
 // through this package's own HTTP route — the settings wire refuses
 // third-party namespaces), then stacks that palette's tokens as a

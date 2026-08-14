@@ -1,10 +1,14 @@
 # dsh-theme-palettes
 
-A **palette infrastructure** for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH). It ships a built-in **VSCode Red** dark palette and exposes a client-side registration API (`themePalettes`) so third-party plugins can contribute their own palettes without touching the harness theme registry.
+A **palette infrastructure** for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH). It ships three built-in palettes — **VSCode Red**, **Solarized Dark**, and **Solarized Light** — and exposes a client-side registration API (`themePalettes`) so third-party plugins can contribute their own palettes without touching the harness theme registry.
 
-## Palette
+## Palettes
 
-The built-in palette is `vscode-red` ("VSCode Red"), a faithful port of the VSCode Red color theme's `colors` block onto the DSH `--dsw-*` design tokens. Deep maroon replaces black, and every neutral "blackish" surface, border, button, scrollbar, and code block is remapped onto a dark-red scale with a `#cc3333` accent.
+Each built-in palette is a faithful port of a VSCode color theme's `colors` block onto the DSH `--dsw-*` design tokens.
+
+### VSCode Red (`vscode-red`)
+
+A faithful port of the VSCode Red color theme's `colors` block. Deep maroon replaces black, and every neutral "blackish" surface, border, button, scrollbar, and code block is remapped onto a dark-red scale with a `#cc3333` accent.
 
 | Role | Value |
 | --- | --- |
@@ -17,7 +21,41 @@ The built-in palette is `vscode-red` ("VSCode Red"), a faithful port of the VSCo
 | Secondary text | `#ffbbbb` |
 | Error / success / warn | `#f14c4c` / `#89d185` / `#cca700` |
 
-The full token map (87 tokens) is authored in [`src/palettes.js`](./src/palettes.js); the generated bundle is [`client.js`](./client.js). The reference theme's `tokenColors` (syntax highlighting) are intentionally left out: the DSH theme layer exposes only surface/chrome tokens, so those code-color rules have no token to map onto.
+### Solarized Dark (`solarized-dark`)
+
+A faithful port of the built-in VSCode "Solarized (dark)" theme's `colors` block: the canonical base03 teal-black ladder with the reference's cyan accent (`#2aa198`, the theme's focus/selection/button color).
+
+| Role | Value |
+| --- | --- |
+| Editor / app base | `#002b36` |
+| Sidebar | `#00212b` |
+| Widgets / code blocks | `#004052` / `#00212b` |
+| Inputs / dropdowns / menus | `#003847` |
+| Brand accent | `#2aa198` |
+| Primary text | `#839496` |
+| Secondary text | `#93a1a1` |
+| Error / success / warn | `#dc322f` / `#859900` / `#b58900` |
+
+Adaptations from the reference: the translucent accents (`#2AA19899` borders, `#004454AA` hovers) become opaque or blended colors so they stay stable across DSH surfaces; the primary button pairs the cyan fill with base03 text; info buttons keep the reference's badge blue `#047aa6` with the DSH's hardcoded white button text; toast and tooltip surfaces sit on the input teal `#004052`.
+
+### Solarized Light (`solarized-light`)
+
+A faithful port of the built-in VSCode "Solarized (light)" theme's `colors` block: the base3 cream ladder with the reference's yellow accent (`#b58900`, the theme's badge/progress/prominent-button color).
+
+| Role | Value |
+| --- | --- |
+| Editor / app base | `#fdf6e3` |
+| Sidebar | `#eee8d5` |
+| Widgets / code blocks | `#eee8d5` / `#f7f0e0` |
+| Inputs / dropdowns / menus | `#ddd6c1` |
+| Brand accent | `#b58900` |
+| Primary text | `#657b83` |
+| Secondary text | `#586e75` |
+| Error / success / warn | `#dc322f` / `#859900` / `#b58900` |
+
+Adaptations from the reference: the translucent golds (`#DFCA8844`, `#B58900AA`) become opaque or blended colors so they stay stable across DSH surfaces; the primary button pairs the yellow fill with base03 text; toasts and tooltips stay on the dark base02/base03 pair like the stock light theme; the selection gold `#dfca88` carries the active list/nav states.
+
+The full token maps (89 tokens per Solarized palette; 87 for VSCode Red, which leaves the success/warn tertiary states on the stock values) are authored in [`src/palettes.js`](./src/palettes.js); the generated bundle is [`client.js`](./client.js). The reference themes' `tokenColors` (syntax highlighting) are intentionally left out: the DSH theme layer exposes only surface/chrome tokens, so those code-color rules have no token to map onto.
 
 ## Install
 
@@ -68,8 +106,8 @@ Changes apply live and persist as a flat section of the user's settings document
 ```jsonc
 {
   "theme-palettes": {
-    "dark": "vscode-red", // example: after picking VSCode Red for dark
-    "light": "default"
+    "dark": "solarized-dark", // example: Solarized Dark for the dark appearance
+    "light": "solarized-light" // example: Solarized Light for the light appearance
   }
 }
 ```

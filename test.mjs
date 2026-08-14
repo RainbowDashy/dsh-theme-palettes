@@ -255,7 +255,11 @@ await run('built-in palette registered, listed, and applied', () => {
   const { theme, slots, service } = setup()
 
   assert(service, 'themePalettes service provided')
-  assertEq(service.list(), [{ id: 'vscode-red', label: 'VSCode Red', builtIn: true, swatch: '#390000', accent: '#cc3333' }], 'built-in listed with builtIn: true, swatch, and accent')
+  assertEq(service.list(), [
+    { id: 'vscode-red', label: 'VSCode Red', builtIn: true, swatch: '#390000', accent: '#cc3333' },
+    { id: 'solarized-dark', label: 'Solarized Dark', builtIn: true, swatch: '#002b36', accent: '#2aa198' },
+    { id: 'solarized-light', label: 'Solarized Light', builtIn: true, swatch: '#fdf6e3', accent: '#b58900' },
+  ], 'built-ins listed with builtIn: true, swatch, and accent')
 
   assertEq(theme._calls.length, 0, 'no override layer on init: both schemes default to the stock palette')
   service.setMapping('dark', 'vscode-red')
@@ -268,6 +272,43 @@ await run('built-in palette registered, listed, and applied', () => {
   const registered = reg.factory()
   assertEq(registered.id, 'theme-palettes', 'settings.plugin.item id')
   assertEq(registered.order, 30, 'settings.plugin.item order')
+})
+
+// ---- scenario: solarized built-ins ------------------------------------------
+
+await run('solarized palettes carry complete, flat, valid token maps', async () => {
+  const { PALETTES } = await import('./src/palettes.js')
+  const catalog = Object.fromEntries(PALETTES.map((palette) => [palette.id, palette]))
+  const CORE_TOKENS = ['--dsw-alias-bg-base', '--dsw-alias-brand-primary', '--dsw-alias-label-primary', '--dsw-specific-sidebar-fill']
+
+  for (const id of ['solarized-dark', 'solarized-light']) {
+    const palette = catalog[id]
+    assert(palette, `${id} is in the built-in catalog`)
+    const names = Object.keys(palette.tokens)
+    assertEq(names.length, 89, `${id} covers every non-static design token`)
+    for (const name of names) {
+      assert(typeof palette.tokens[name] === 'string', `${id}: ${name} is a flat CSS value string`)
+    }
+    for (const name of CORE_TOKENS) {
+      assert(palette.tokens[name], `${id} sets ${name}`)
+    }
+  }
+
+  assert(catalog['solarized-dark'].tokens['--dsw-alias-bg-base'] !== catalog['solarized-light'].tokens['--dsw-alias-bg-base'], 'dark and light solarized bases differ')
+  assertEq(catalog['solarized-dark'].tokens['--dsw-alias-label-primary'], '#839496', 'dark body text is canonical base0')
+  assertEq(catalog['solarized-light'].tokens['--dsw-alias-label-primary'], '#657b83', 'light body text is canonical base00')
+  assertEq(catalog['solarized-dark'].tokens['--dsw-alias-state-error-primary'], '#dc322f', 'dark error is canonical red')
+  assertEq(catalog['solarized-light'].tokens['--dsw-alias-state-warn-primary'], '#b58900', 'light warning is canonical yellow')
+})
+
+await run('mapping a scheme to a solarized palette applies its layer', async () => {
+  const { theme, service } = setup({ scheme: 'dark' })
+  service.setMapping('dark', 'solarized-dark')
+  assertEq(theme._calls.length, 1, 'mapping dark to solarized-dark applies the override layer')
+  assertEq(theme._calls[0].tokens['--dsw-alias-bg-base'], { light: '#002b36', dark: '#002b36' }, 'solarized-dark base pairs for both schemes')
+  service.setMapping('dark', 'solarized-light')
+  assertEq(theme._calls.length, 2, 'switching palettes re-applies the layer')
+  assertEq(theme._calls[1].tokens['--dsw-alias-bg-base'], { light: '#fdf6e3', dark: '#fdf6e3' }, 'solarized-light base pairs for both schemes')
 })
 
 // ---- scenario: duplicate registration throws --------------------------------
@@ -470,10 +511,16 @@ await run('third-party registerPalette works and list reflects it', () => {
   const dispose = service.registerPalette({ id: 'blue', label: 'Blue', tokens: { '--dsw-alias-bg-base': '#0000ff' } })
   assertEq(service.list(), [
     { id: 'vscode-red', label: 'VSCode Red', builtIn: true, swatch: '#390000', accent: '#cc3333' },
+    { id: 'solarized-dark', label: 'Solarized Dark', builtIn: true, swatch: '#002b36', accent: '#2aa198' },
+    { id: 'solarized-light', label: 'Solarized Light', builtIn: true, swatch: '#fdf6e3', accent: '#b58900' },
     { id: 'blue', label: 'Blue', builtIn: false, swatch: '#0000ff', accent: '#0000ff' },
-  ], 'third-party palette listed after built-in with builtIn: false, swatch, and accent (falls back to base)')
+  ], 'third-party palette listed after built-ins with builtIn: false, swatch, and accent (falls back to base)')
   dispose()
-  assertEq(service.list(), [{ id: 'vscode-red', label: 'VSCode Red', builtIn: true, swatch: '#390000', accent: '#cc3333' }], 'disposing removes the palette')
+  assertEq(service.list(), [
+    { id: 'vscode-red', label: 'VSCode Red', builtIn: true, swatch: '#390000', accent: '#cc3333' },
+    { id: 'solarized-dark', label: 'Solarized Dark', builtIn: true, swatch: '#002b36', accent: '#2aa198' },
+    { id: 'solarized-light', label: 'Solarized Light', builtIn: true, swatch: '#fdf6e3', accent: '#b58900' },
+  ], 'disposing removes the palette')
 })
 
 // ---- result -----------------------------------------------------------------
