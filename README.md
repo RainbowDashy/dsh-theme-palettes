@@ -2,6 +2,41 @@
 
 A **palette infrastructure** for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH). It ships three built-in palettes — **VSCode Red**, **Solarized Dark**, and **Solarized Light** — and exposes a client-side registration API (`themePalettes`) so third-party plugins can contribute their own palettes without touching the harness theme registry.
 
+## Install
+
+```sh
+dsh plugin --profile web add "github:RainbowDashy/dsh-theme-palettes"
+```
+
+Then restart the web server so the new composition row enters the boot graph:
+
+```sh
+dsh web
+```
+
+That is the whole install. What happens under the hood:
+
+1. `dsh plugin add` forwards to `pnpm add` inside the profile directory (`$DSH_HOME/profiles/web`), so the package lands in the profile's `node_modules`. The generated artifacts are committed, so nothing builds at install time — pnpm's build-script gate never triggers.
+2. Because `package.json` declares a `dsh.bundle` patch, `dsh plugin` reconciles the package into the profile's `dsh.profile.bundles` layer stack — no manual `cordis.patch.yml` editing.
+3. On the next start, that patch layer inserts the plugin's own row, the host-side `client-modules` scan picks up the `dsh.client` declaration, and the browser mounts the bundle from `/plugins/dsh-theme-palettes/client.js`.
+
+The plugin does **not** register into the harness theme registry and never calls `setTheme` — the harness Appearance picker (light/dark/system) is not extensible by third parties. Palettes are applied through a single `theme.overrideTokens` layer instead (see [Usage](#usage)).
+
+- Pin a branch or tag: `"github:RainbowDashy/dsh-theme-palettes#main"`.
+- Install from a local checkout: `dsh plugin --profile web add "link:/path/to/checkout"` (`link:` keeps your edits live; `file:` snapshots the directory).
+
+## Usage
+
+This package never touches the Appearance picker and never registers a theme id there. Instead it maps the **resolved** color scheme onto a palette via one `theme.overrideTokens` layer:
+
+- Both **dark** and **light** appearances stay on the stock (`default`) palette by default; opt into a palette per scheme from the settings card.
+- **System** resolves to light or dark via the OS and re-fires when the OS scheme flips.
+- Changing the Appearance preference (light/dark/system) re-maps the palette immediately.
+- A mapping that references an unregistered id is fail-soft: it behaves as `default`.
+- Removing the plugin restores the stock palette.
+
+Because the palette is layered over the active theme via `overrideTokens`, it wins per-token for as long as the plugin is loaded.
+
 ## Palettes
 
 Each built-in palette is a faithful port of a VSCode color theme's `colors` block onto the DSH `--dsw-*` design tokens.
@@ -56,41 +91,6 @@ A faithful port of the built-in VSCode "Solarized (light)" theme's `colors` bloc
 Adaptations from the reference: the translucent golds (`#DFCA8844`, `#B58900AA`) become opaque or blended colors so they stay stable across DSH surfaces; the primary button pairs the yellow fill with base03 text; toasts and tooltips stay on the dark base02/base03 pair like the stock light theme; the selection gold `#dfca88` carries the active list/nav states.
 
 The full token maps (89 tokens per Solarized palette; 87 for VSCode Red, which leaves the success/warn tertiary states on the stock values) are authored in [`src/palettes.js`](./src/palettes.js); the generated bundle is [`client.js`](./client.js). The reference themes' `tokenColors` (syntax highlighting) are intentionally left out: the DSH theme layer exposes only surface/chrome tokens, so those code-color rules have no token to map onto.
-
-## Install
-
-```sh
-dsh plugin --profile web add "github:RainbowDashy/dsh-theme-palettes"
-```
-
-Then restart the web server so the new composition row enters the boot graph:
-
-```sh
-dsh web
-```
-
-That is the whole install. What happens under the hood:
-
-1. `dsh plugin add` forwards to `pnpm add` inside the profile directory (`$DSH_HOME/profiles/web`), so the package lands in the profile's `node_modules`. The generated artifacts are committed, so nothing builds at install time — pnpm's build-script gate never triggers.
-2. Because `package.json` declares a `dsh.bundle` patch, `dsh plugin` reconciles the package into the profile's `dsh.profile.bundles` layer stack — no manual `cordis.patch.yml` editing.
-3. On the next start, that patch layer inserts the plugin's own row, the host-side `client-modules` scan picks up the `dsh.client` declaration, and the browser mounts the bundle from `/plugins/dsh-theme-palettes/client.js`.
-
-The plugin does **not** register into the harness theme registry and never calls `setTheme` — the harness Appearance picker (light/dark/system) is not extensible by third parties. Palettes are applied through a single `theme.overrideTokens` layer instead (see [Usage](#usage)).
-
-- Pin a branch or tag: `"github:RainbowDashy/dsh-theme-palettes#main"`.
-- Install from a local checkout: `dsh plugin --profile web add "link:/path/to/checkout"` (`link:` keeps your edits live; `file:` snapshots the directory).
-
-## Usage
-
-This package never touches the Appearance picker and never registers a theme id there. Instead it maps the **resolved** color scheme onto a palette via one `theme.overrideTokens` layer:
-
-- Both **dark** and **light** appearances stay on the stock (`default`) palette by default; opt into a palette per scheme from the settings card.
-- **System** resolves to light or dark via the OS and re-fires when the OS scheme flips.
-- Changing the Appearance preference (light/dark/system) re-maps the palette immediately.
-- A mapping that references an unregistered id is fail-soft: it behaves as `default`.
-- Removing the plugin restores the stock palette.
-
-Because the palette is layered over the active theme via `overrideTokens`, it wins per-token for as long as the plugin is loaded.
 
 ## Settings
 
@@ -153,7 +153,7 @@ A palette is pure data. Register it through the `themePalettes` service:
 
 Hand-edited sources live in `src/`:
 
-- [`src/palettes.js`](./src/palettes.js) — the palette catalog (built-in `vscode-red` and helpers).
+- [`src/palettes.js`](./src/palettes.js) — the palette catalog (the built-in palettes and helpers).
 - [`src/client.js`](./src/client.js) — the runtime: the `themePalettes` service, the mapping store, and the override layer.
 - [`src/settings.js`](./src/settings.js) — the "Theme palettes" plugin-configuration card UI.
 - [`src/host.js`](./src/host.js) — the host half: settings-namespace registration plus the `/api/theme-palettes` route.
