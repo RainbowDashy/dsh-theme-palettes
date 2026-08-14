@@ -3,16 +3,24 @@
   "version": "1.0.0",
   "description": "VSCode \"Red\" dark theme for DeepSeek Harness — deep maroon surfaces with a red accent, ported from the VSCode Red color theme.",
   "type": "module",
-  "main": "client.js",
+  "main": "index.js",
   "exports": {
-    ".": "./client.js",
+    ".": "./index.js",
     "./client": "./client.js",
     "./package.json": "./package.json"
   },
   "files": [
+    "index.js",
     "client.js",
+    "cordis.patch.yml",
+    "src/client.js",
+    "build.mjs",
     "README.md"
   ],
+  "scripts": {
+    "build": "node build.mjs",
+    "prepare": "node build.mjs"
+  },
   "license": "MIT",
   "keywords": [
     "deepseek-harness",
@@ -27,6 +35,9 @@
     "client": {
       "platform": "web",
       "immediately": true
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
     }
   },
   "peerDependencies": {
