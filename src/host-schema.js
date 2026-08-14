@@ -15,7 +15,7 @@
 export const SETTINGS_NAMESPACE = 'theme-palettes'
 
 /** Fallback mapping used until a user override exists. */
-export const HOST_DEFAULT_MAPPING = { dark: 'vscode-red', light: 'default' }
+export const HOST_DEFAULT_MAPPING = { dark: 'default', light: 'default' }
 
 /** Private HTTP route the browser half reads and writes through. */
 export const HTTP_ROUTE = '/api/theme-palettes'

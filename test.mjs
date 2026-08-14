@@ -257,7 +257,9 @@ await run('built-in palette registered, listed, and applied', () => {
   assert(service, 'themePalettes service provided')
   assertEq(service.list(), [{ id: 'vscode-red', label: 'VSCode Red', builtIn: true, swatch: '#390000', accent: '#cc3333' }], 'built-in listed with builtIn: true, swatch, and accent')
 
-  assertEq(theme._calls.length, 1, 'exactly one override layer applied on init')
+  assertEq(theme._calls.length, 0, 'no override layer on init: both schemes default to the stock palette')
+  service.setMapping('dark', 'vscode-red')
+  assertEq(theme._calls.length, 1, 'mapping dark to a palette applies the override layer')
   assertEq(theme._calls[0].source, 'theme-palettes', 'override layer source')
   assertEq(theme._calls[0].tokens['--dsw-alias-bg-base'], { light: '#390000', dark: '#390000' }, 'pairs map token → { light, dark }')
 
@@ -285,7 +287,9 @@ await run('duplicate registration throws', () => {
 // ---- scenario: scheme change to light disposes the layer --------------------
 
 await run('scheme change to light (default) disposes the layer', async () => {
-  const { theme, ctx } = setup({ scheme: 'dark' })
+  const { theme, ctx } = setup({ scheme: 'dark', hostSeed: { dark: 'vscode-red' } })
+  await tick() // let the initial GET land the seeded mapping
+  assertEq(theme._calls.length, 1, 'seeded dark mapping applied a layer')
   assertEq(theme._disposedCount(), 0, 'no disposal before scheme change')
   theme.setScheme('light')
   ctx.emit('theme/change', theme.getTheme())
@@ -295,9 +299,10 @@ await run('scheme change to light (default) disposes the layer', async () => {
 
 // ---- scenario: mapping change to default disposes ---------------------------
 
-await run('mapping change to default disposes the layer', () => {
-  const { theme, service } = setup({ scheme: 'dark' })
-  assertEq(theme._calls.length, 1, 'dark default mapping applied a layer')
+await run('mapping change to default disposes the layer', async () => {
+  const { theme, service } = setup({ scheme: 'dark', hostSeed: { dark: 'vscode-red' } })
+  await tick()
+  assertEq(theme._calls.length, 1, 'seeded dark mapping applied a layer')
   service.setMapping('dark', 'default')
   assertEq(theme._disposedCount(), 1, 'layer disposed when dark mapping set to default')
 })
@@ -306,21 +311,22 @@ await run('mapping change to default disposes the layer', () => {
 
 await run('unknown palette id falls back to default without throwing', async () => {
   const { theme, ctx } = setup({ scheme: 'dark', hostSeed: { dark: 'no-such-palette' } })
-  assertEq(theme._calls.length, 1, 'default mapping applied a layer before the server read lands')
+  assertEq(theme._calls.length, 0, 'no layer before the server read lands')
   await tick()
-  assertEq(theme._disposedCount(), 1, 'unknown palette id behaves like default (layer disposed)')
-  assertEq(theme._calls.length, 1, 'unknown palette id never applies a layer')
+  assertEq(theme._calls.length, 0, 'unknown palette id never applies a layer')
+  assertEq(theme._disposedCount(), 0, 'nothing to dispose under an unknown palette')
   theme.setScheme('light')
   ctx.emit('theme/change', theme.getTheme())
   await tick()
-  assertEq(theme._calls.length, 1, 'still no layer after a scheme change under unknown palette')
+  assertEq(theme._calls.length, 0, 'still no layer after a scheme change under unknown palette')
 })
 
 // ---- scenario: echo guard (no duplicate overrideTokens for no-op) -----------
 
 await run('echo guard skips no-op re-resolves', async () => {
-  const { theme, ctx, remote } = setup({ scheme: 'dark' })
-  assertEq(theme._calls.length, 1, 'initial layer applied')
+  const { theme, ctx, remote } = setup({ scheme: 'dark', hostSeed: { dark: 'vscode-red' } })
+  await tick()
+  assertEq(theme._calls.length, 1, 'seeded mapping applied the initial layer')
   ctx.emit('theme/change', theme.getTheme())
   await tick()
   assertEq(theme._calls.length, 1, 'no duplicate overrideTokens on same-scheme theme/change')
@@ -341,14 +347,16 @@ await run('echo guard skips no-op re-resolves', async () => {
 // switching to light, and the next switch to dark threw "Maximum call stack
 // size exceeded").
 
-await run('emitting theme: init applies exactly one layer (no synchronous re-entry)', () => {
-  const { theme } = setup({ scheme: 'dark', emitting: true })
-  assertEq(theme._calls.length, 1, 'exactly one overrideTokens on init despite synchronous theme/change re-emission')
+await run('emitting theme: seeded mapping applies exactly one layer (no synchronous re-entry)', async () => {
+  const { theme } = setup({ scheme: 'dark', hostSeed: { dark: 'vscode-red' }, emitting: true })
+  await tick()
+  assertEq(theme._calls.length, 1, 'exactly one overrideTokens despite synchronous theme/change re-emission')
 })
 
 await run('emitting theme: dark → light → dark round-trip stays consistent', async () => {
-  const { theme, ctx } = setup({ scheme: 'dark', emitting: true })
-  assertEq(theme._calls.length, 1, 'dark default mapping applied a layer')
+  const { theme, ctx } = setup({ scheme: 'dark', hostSeed: { dark: 'vscode-red' }, emitting: true })
+  await tick()
+  assertEq(theme._calls.length, 1, 'seeded dark mapping applied a layer')
   theme.setScheme('light')
   ctx.emit('theme/change', theme.getTheme())
   await tick()
@@ -362,7 +370,8 @@ await run('emitting theme: dark → light → dark round-trip stays consistent',
 })
 
 await run('emitting theme: repeated scheme flips stay bounded and consistent', async () => {
-  const { theme, ctx } = setup({ scheme: 'dark', emitting: true })
+  const { theme, ctx } = setup({ scheme: 'dark', hostSeed: { dark: 'vscode-red' }, emitting: true })
+  await tick()
   for (let i = 0; i < 3; i++) {
     theme.setScheme('light')
     ctx.emit('theme/change', theme.getTheme())
@@ -380,7 +389,7 @@ await run('emitting theme: repeated scheme flips stay bounded and consistent', a
 await run('host schema resolves defaults and preserves user fields', async () => {
   const { SETTINGS_NAMESPACE, HOST_DEFAULT_MAPPING, buildSchema, registerNamespace } = await import('./src/host-schema.js')
   assertEq(SETTINGS_NAMESPACE, 'theme-palettes', 'namespace is lowercase kebab-case')
-  assertEq(HOST_DEFAULT_MAPPING, { dark: 'vscode-red', light: 'default' }, 'host defaults match the client defaults')
+  assertEq(HOST_DEFAULT_MAPPING, { dark: 'default', light: 'default' }, 'host defaults match the client defaults')
 
   // Minimal schemastery-shaped fake: string().default(v) resolves v when the
   // field is absent; object() validates the two declared fields.
@@ -395,15 +404,15 @@ await run('host schema resolves defaults and preserves user fields', async () =>
     },
   }
   const schema = buildSchema(fakeZ)
-  assertEq(schema({}), { dark: 'vscode-red', light: 'default' }, 'schema resolves defaults for an empty section')
-  assertEq(schema({ dark: 'default' }), { dark: 'default', light: 'default' }, 'schema keeps user overrides')
+  assertEq(schema({}), { dark: 'default', light: 'default' }, 'schema resolves defaults for an empty section')
+  assertEq(schema({ dark: 'vscode-red' }), { dark: 'vscode-red', light: 'default' }, 'schema keeps user overrides')
 
   let registered = null
   const settings = { register: (ns, received) => { registered = { ns, schema: received } } }
   registerNamespace(settings, fakeZ)
   assert(registered, 'registerNamespace calls settings.register')
   assertEq(registered.ns, 'theme-palettes', 'registerNamespace registers under the namespace')
-  assertEq(registered.schema({}), { dark: 'vscode-red', light: 'default' }, 'registered schema resolves defaults')
+  assertEq(registered.schema({}), { dark: 'default', light: 'default' }, 'registered schema resolves defaults')
 })
 
 await run('host op validation accepts only dark/light edits', async () => {
@@ -440,12 +449,13 @@ await run('mapping writes persist through the host route', async () => {
   assert(posted, 'a POST was sent')
   assertEq(posted.ops, [{ op: 'set', path: ['light'], value: 'vscode-red' }], 'POST carried the set op')
   assert(typeof posted.expectedRevision === 'number', 'POST carried the expected revision')
-  assertEq(service.getMapping(), { dark: 'vscode-red', light: 'vscode-red' }, 'local mapping reflects the write')
+  assertEq(service.getMapping(), { dark: 'default', light: 'vscode-red' }, 'local mapping reflects the write, dark stays on the stock default')
 })
 
 await run('server-side mapping changes re-resolve the layer', async () => {
-  const { theme, remote } = setup({ scheme: 'dark' })
-  assertEq(theme._calls.length, 1, 'initial layer applied')
+  const { theme, remote } = setup({ scheme: 'dark', hostSeed: { dark: 'vscode-red' } })
+  await tick()
+  assertEq(theme._calls.length, 1, 'seeded mapping applied the initial layer')
   fakeHost.value.dark = 'default'
   fakeHost.revision += 1
   remote._emit('settings/document-updated', 'theme-palettes')

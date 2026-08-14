@@ -69,7 +69,7 @@ Restart the server — row-set changes only take effect on restart.
 
 This package never touches the Appearance picker and never registers a theme id there. Instead it maps the **resolved** color scheme onto a palette via one `theme.overrideTokens` layer:
 
-- **Dark appearance** uses `vscode-red` by default; **light appearance** stays on the stock (`default`) palette.
+- Both **dark** and **light** appearances stay on the stock (`default`) palette by default; opt into a palette per scheme from the settings card.
 - **System** resolves to light or dark via the OS and re-fires when the OS scheme flips.
 - Changing the Appearance preference (light/dark/system) re-maps the palette immediately.
 - A mapping that references an unregistered id is fail-soft: it behaves as `default`.
@@ -91,13 +91,13 @@ Changes apply live and persist as a flat section of the user's settings document
 ```jsonc
 {
   "theme-palettes": {
-    "dark": "vscode-red",
+    "dark": "vscode-red", // example: after picking VSCode Red for dark
     "light": "default"
   }
 }
 ```
 
-Defaults are `dark: vscode-red`, `light: default`. A value referencing an unregistered id behaves as `default` and is shown as "(unavailable)" in the dropdown.
+Defaults are `dark: default`, `light: default` — the same as an absent section. A value referencing an unregistered id behaves as `default` and is shown as "(unavailable)" in the dropdown.
 
 ### Why a private route instead of the settings wire?
 

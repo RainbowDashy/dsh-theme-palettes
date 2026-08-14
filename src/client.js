@@ -20,7 +20,7 @@ import { registerPaletteSettings } from './settings.js'
 export const SERVICE_NAME = 'themePalettes'
 export const SETTINGS_NAMESPACE = 'theme-palettes'
 export const LAYER_SOURCE = 'theme-palettes'
-export const DEFAULT_MAPPING = { dark: 'vscode-red', light: 'default' }
+export const DEFAULT_MAPPING = { dark: 'default', light: 'default' }
 // Mirrors the Host-side HTTP_ROUTE in src/host-schema.js (the client bundle
 // cannot import the host module).
 export const HTTP_ROUTE = '/api/theme-palettes'
