@@ -165,9 +165,12 @@ export function apply(ctx) {
   resolve()
 
   // ---- Settings UI ---------------------------------------------------------
+  // `slots` is optional and read through ctx.get: the harness guard throws on
+  // undeclared ctx.<service> property access, so the section receives it as a
+  // dependency instead of reaching through the context.
   const slots = ctx.get('slots')
   if (slots) {
-    registerPaletteSettings(ctx, {
+    registerPaletteSettings(slots, {
       subscribe: subscribeSettings,
       getMapping,
       setMapping,

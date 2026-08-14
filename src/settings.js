@@ -6,7 +6,7 @@
 // declares `const React = require("react")` before this source, so do NOT
 // import it. Everything else the section needs comes from `deps`.
 
-export function registerPaletteSettings(ctx, deps) {
+export function registerPaletteSettings(slots, deps) {
   function Section() {
     const [mapping, setMapping] = React.useState(() => deps.getMapping())
     const [palettes, setPalettes] = React.useState(() => deps.getPalettes())
@@ -79,7 +79,7 @@ export function registerPaletteSettings(ctx, deps) {
     )
   }
 
-  ctx.slots.inject('settings.section', () => ctx.slots.register({
+  slots.inject('settings.section', () => slots.register({
     name: 'settings.section',
     id: 'palettes',
     order: 1,

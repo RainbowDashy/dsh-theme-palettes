@@ -138,7 +138,15 @@ function makeCtx({ theme, scope, slots }) {
       // disposer until fiber dispose. Run it, but do NOT dispose here.
       fn()
     },
-    slots,
+    // Faithful to the harness loader guard: accessing an undeclared
+    // ctx.<service> property throws, so tests go red if the bundle ever
+    // reaches through the context instead of using ctx.get / inject.
+    get slots() {
+      throw new Error('cannot get property "slots" without inject')
+    },
+    get settingsScope() {
+      throw new Error('cannot get property "settingsScope" without inject')
+    },
     _provided: provided,
   }
   return ctx

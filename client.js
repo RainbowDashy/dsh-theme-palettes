@@ -157,9 +157,12 @@ window.__ModuleLoader__.load({
   resolve()
 
   // ---- Settings UI ---------------------------------------------------------
+  // `slots` is optional and read through ctx.get: the harness guard throws on
+  // undeclared ctx.<service> property access, so the section receives it as a
+  // dependency instead of reaching through the context.
   const slots = ctx.get('slots')
   if (slots) {
-    registerPaletteSettings(ctx, {
+    registerPaletteSettings(slots, {
       subscribe: subscribeSettings,
       getMapping,
       setMapping,
@@ -169,7 +172,7 @@ window.__ModuleLoader__.load({
   }
 }
 
-    function registerPaletteSettings(ctx, deps) {
+    function registerPaletteSettings(slots, deps) {
   function Section() {
     const [mapping, setMapping] = React.useState(() => deps.getMapping())
     const [palettes, setPalettes] = React.useState(() => deps.getPalettes())
@@ -242,7 +245,7 @@ window.__ModuleLoader__.load({
     )
   }
 
-  ctx.slots.inject('settings.section', () => ctx.slots.register({
+  slots.inject('settings.section', () => slots.register({
     name: 'settings.section',
     id: 'palettes',
     order: 1,
