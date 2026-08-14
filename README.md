@@ -42,29 +42,6 @@ The plugin does **not** register into the harness theme registry and never calls
 - Pin a branch or tag: `"github:RainbowDashy/dsh-theme-palettes#main"`.
 - Install from a local checkout: `dsh plugin --profile web add "link:/path/to/checkout"` (`link:` keeps your edits live; `file:` snapshots the directory).
 
-### Migration from `dsh-theme-vscode-red`
-
-This package supersedes the old `dsh-theme-vscode-red` single-theme package. The GitHub repo was renamed, so the old URLs redirect. To migrate:
-
-```sh
-dsh plugin --profile web remove dsh-theme-vscode-red
-dsh plugin --profile web add "github:RainbowDashy/dsh-theme-palettes"
-```
-
-Then restart `dsh web`. No settings migration is needed — the old package persisted nothing.
-
-### Manual mount (without the bundle patch)
-
-On a profile where the composition is managed by hand, install the package however you like and add one row to the profile's `cordis.patch.yml`:
-
-```yaml
-- insert:
-    - id: theme-palettes
-      name: dsh-theme-palettes
-```
-
-Restart the server — row-set changes only take effect on restart.
-
 ## Usage
 
 This package never touches the Appearance picker and never registers a theme id there. Instead it maps the **resolved** color scheme onto a palette via one `theme.overrideTokens` layer:
