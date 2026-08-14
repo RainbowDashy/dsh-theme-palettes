@@ -39,10 +39,8 @@ That is the whole install. What happens under the hood:
 
 1. `dsh plugin add` forwards to `pnpm add` inside the profile directory
    (`$DSH_HOME/profiles/web`), so the package lands in the profile's
-   `node_modules`. On a git fetch, pnpm runs this package's `prepare` script,
-   which regenerates the client bundle from source (the generated artifacts
-   are committed as well, so the install works even where `prepare` does not
-   run).
+   `node_modules`. The generated artifacts are committed, so nothing builds
+   at install time — pnpm's build-script gate never triggers.
 2. Because `package.json` declares `dsh.bundle.patch`, `dsh plugin`
    reconciles the package into the profile's `dsh.profile.bundles` layer
    stack.
@@ -70,6 +68,15 @@ however you like and add one row to the profile's `cordis.patch.yml`:
 ```
 
 Restart the server — row-set changes only take effect on restart.
+
+### Troubleshooting: pnpm blocks a git-hosted package's build scripts
+
+pnpm 10+ refuses to run lifecycle scripts of git dependencies unless they are
+allowlisted. This theme deliberately ships no install-time scripts (its
+artifacts are committed), so the install above works out of the box. If pnpm
+reports `ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED` for *another* plugin, add the
+exact key pnpm printed to the profile's `pnpm-workspace.yaml` —
+`onlyBuiltDependencies` on pnpm 10, `allowBuilds` on pnpm 11 — and re-run.
 
 ## Usage
 
@@ -99,6 +106,10 @@ This rewrites three generated files:
 - `index.js` — the no-op host half; keeps the composition row's host fiber
   active so the `client-modules` scan qualifies the package.
 - `cordis.patch.yml` — the `dsh.bundle` patch layer that inserts the row.
+
+Commit the regenerated files: installs consume the committed artifacts (no
+build runs at install time). `prepublishOnly` also rebuilds them right before
+an npm/pnpm publish.
 
 ## Why tokenColors aren't included
 

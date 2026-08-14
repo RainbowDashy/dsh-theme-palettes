@@ -17,9 +17,11 @@
 //                      layer stack, so this patch makes the install
 //                      self-activating on the next restart.
 //
-// Zero dependencies: plain `node build.mjs`. Wired as the `prepare` hook so
-// pnpm/npm git installs build on fetch; the artifacts are also committed, so
-// installs work even where `prepare` does not run.
+// Zero dependencies: plain `node build.mjs`. Deliberately NOT a `prepare`
+// hook: pnpm 10+ refuses to run lifecycle scripts of git-hosted packages
+// unless they are allowlisted, and this package needs no build at install
+// time — the generated artifacts are committed. `prepublishOnly` rebuilds
+// them right before an npm/pnpm publish.
 import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
