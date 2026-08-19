@@ -12,7 +12,6 @@ window.__ModuleLoader__.load({
     const SETTINGS_NAMESPACE = "theme-palettes";
     const LAYER_SOURCE = "theme-palettes";
     const DEFAULT_MAPPING = {"dark":"default","light":"default"};
-    const HTTP_ROUTE = "/api/theme-palettes";
     const PALETTES = [{"id":"vscode-red","label":"VSCode Red","tokens":{"--dsw-alias-bg-base":"#390000","--dsw-alias-bg-layer-1":"#330000","--dsw-alias-bg-layer-2":"#300000","--dsw-alias-bg-layer-3":"#490000","--dsw-alias-bg-mask-1":"rgba(48, 0, 0, 0.55)","--dsw-alias-bg-mask-2":"rgba(48, 0, 0, 0.28)","--dsw-alias-bg-mask-3":"rgba(40, 0, 0, 0.55)","--dsw-alias-bg-mask-photo":"rgba(24, 0, 0, 0.9)","--dsw-alias-bg-mask-drop":"rgba(48, 0, 0, 0.72)","--dsw-alias-bg-module-platform":"#580000","--dsw-alias-bg-multi-select":"#490000","--dsw-alias-bg-overlay":"#580000","--dsw-alias-bg-skeleton":"rgba(255, 120, 120, 0.10)","--dsw-alias-border-inverted2":"rgba(255, 102, 102, 0.16)","--dsw-alias-border-inverted":"rgba(255, 102, 102, 0.12)","--dsw-alias-border-l1":"rgba(255, 102, 102, 0.14)","--dsw-alias-border-l2-darkmode-thin":"rgba(255, 102, 102, 0.10)","--dsw-alias-border-l2":"rgba(255, 102, 102, 0.22)","--dsw-alias-border-l3":"rgba(255, 102, 102, 0.30)","--dsw-alias-border-l4":"rgba(255, 102, 102, 0.40)","--dsw-alias-brand-primary-invert":"#f8f8f8","--dsw-alias-brand-primary-new-colorprimary-new-color":"#cc3333","--dsw-alias-brand-primary":"#cc3333","--dsw-alias-brand-text":"#f8f8f8","--dsw-alias-button-contrast-fill":"#cc3333","--dsw-alias-button-elevated-fill":"#700000","--dsw-alias-button-floating-fill":"#490000","--dsw-alias-button-floating-hover":"#580000","--dsw-alias-button-ghost-active-border":"#ff6666","--dsw-alias-button-ghost-active-fill":"#700000","--dsw-alias-button-ghost-active-hover":"#800000","--dsw-alias-button-info-fill":"#cc3333","--dsw-alias-button-info-hover":"#dd4444","--dsw-alias-button-primary-dimmed":"#700000","--dsw-alias-button-primary-fill":"#cc3333","--dsw-alias-button-primary-hover":"#dd4444","--dsw-alias-button-tool-bar-fill-invisible":"rgba(72, 0, 0, 0.36)","--dsw-alias-button-tool-bar-fill":"rgba(104, 0, 0, 0.55)","--dsw-alias-button-tool-bar-hover":"rgba(120, 0, 0, 0.6)","--dsw-alias-interactive-bg-active":"rgba(255, 102, 102, 0.16)","--dsw-alias-interactive-bg-hover-accent":"rgba(255, 102, 102, 0.26)","--dsw-alias-interactive-bg-hover-danger":"rgba(242, 90, 90, 0.18)","--dsw-alias-interactive-bg-hover-solid":"#580000","--dsw-alias-interactive-bg-hover":"rgba(255, 102, 102, 0.10)","--dsw-alias-label-caption":"#e7c0c0","--dsw-alias-label-dimmed":"#d4a0a0","--dsw-alias-label-primary-bluish":"#f8f8f8","--dsw-alias-label-primary-dimmed":"#f0c8c8","--dsw-alias-label-primary-foreground":"#ffffff","--dsw-alias-label-primary-inverted":"#330000","--dsw-alias-label-primary":"#f8f8f8","--dsw-alias-label-secondary":"#ffbbbb","--dsw-alias-label-tertiary":"#cc9999","--dsw-alias-markdown-citation":"#580000","--dsw-alias-markdown-code-block-banner":"#490000","--dsw-alias-markdown-code-block":"#300000","--dsw-alias-markdown-code-segment-selected":"#580000","--dsw-alias-markdown-code-segment-unselected":"#300000","--dsw-alias-markdown-inline-code":"#490000","--dsw-alias-markdown-placeholder":"#490000","--dsw-alias-markdown-tag":"#490000","--dsw-alias-scrollbar-bg-l1":"#700000","--dsw-alias-scrollbar-bg-l2":"#880000","--dsw-alias-scrollbar-hover-l1":"#880000","--dsw-alias-scrollbar-hover-l2":"#990000","--dsw-alias-state-business-primary":"#cc3333","--dsw-alias-state-business-tertiary":"#580000","--dsw-alias-state-error-primary":"#f14c4c","--dsw-alias-state-error-secondary":"#f48771","--dsw-alias-state-success-primary":"#89d185","--dsw-alias-state-success-secondary":"#89d185","--dsw-alias-state-warn-label":"#cca700","--dsw-alias-state-warn-primary":"#cca700","--dsw-alias-state-warn-secondary":"#cca700","--dsw-alias-toast-bg":"#700000","--dsw-alias-tooltip-bg":"#700000","--dsw-specific-bubble-highlight":"#700000","--dsw-specific-bubble":"#490000","--dsw-specific-input-major":"#580000","--dsw-specific-login-input":"#300000","--dsw-specific-menu":"#580000","--dsw-specific-selector":"#883333","--dsw-specific-sidebar-fill":"#330000","--dsw-specific-sidebar-nav-item-active-accent":"#580000","--dsw-specific-sidebar-nav-item-active":"#700000","--dsw-specific-sidebar-nav-item-hover":"#490000","--dsw-specific-tip":"#580000"}},{"id":"solarized-dark","label":"Solarized Dark","tokens":{"--dsw-alias-bg-base":"#002b36","--dsw-alias-bg-layer-1":"#073642","--dsw-alias-bg-layer-2":"#003847","--dsw-alias-bg-layer-3":"#004052","--dsw-alias-bg-mask-1":"rgba(0, 43, 54, 0.55)","--dsw-alias-bg-mask-2":"rgba(0, 43, 54, 0.28)","--dsw-alias-bg-mask-3":"rgba(0, 43, 54, 0.5)","--dsw-alias-bg-mask-photo":"rgba(0, 43, 54, 0.9)","--dsw-alias-bg-mask-drop":"rgba(0, 43, 54, 0.72)","--dsw-alias-bg-module-platform":"#003847","--dsw-alias-bg-multi-select":"#004052","--dsw-alias-bg-overlay":"#00212b","--dsw-alias-bg-skeleton":"rgba(147, 161, 161, 0.10)","--dsw-alias-border-inverted2":"rgba(147, 161, 161, 0.14)","--dsw-alias-border-inverted":"rgba(147, 161, 161, 0.10)","--dsw-alias-border-l1":"rgba(147, 161, 161, 0.08)","--dsw-alias-border-l2-darkmode-thin":"rgba(147, 161, 161, 0.06)","--dsw-alias-border-l2":"rgba(147, 161, 161, 0.16)","--dsw-alias-border-l3":"rgba(147, 161, 161, 0.22)","--dsw-alias-border-l4":"rgba(147, 161, 161, 0.30)","--dsw-alias-brand-primary-invert":"#2aa198","--dsw-alias-brand-primary-new-colorprimary-new-color":"#2aa198","--dsw-alias-brand-primary":"#2aa198","--dsw-alias-brand-text":"#fdf6e3","--dsw-alias-button-contrast-fill":"#fdf6e3","--dsw-alias-button-elevated-fill":"#003847","--dsw-alias-button-floating-fill":"#004052","--dsw-alias-button-floating-hover":"#005a6f","--dsw-alias-button-ghost-active-border":"#2aa198","--dsw-alias-button-ghost-active-fill":"#004052","--dsw-alias-button-ghost-active-hover":"#005a6f","--dsw-alias-button-info-fill":"#047aa6","--dsw-alias-button-info-hover":"#268bd2","--dsw-alias-button-primary-dimmed":"#004052","--dsw-alias-button-primary-fill":"#2aa198","--dsw-alias-button-primary-hover":"#268bd2","--dsw-alias-button-tool-bar-fill-invisible":"rgba(0, 43, 54, 0.36)","--dsw-alias-button-tool-bar-fill":"rgba(0, 43, 54, 0.55)","--dsw-alias-button-tool-bar-hover":"rgba(0, 43, 54, 0.6)","--dsw-alias-interactive-bg-active":"rgba(42, 161, 152, 0.18)","--dsw-alias-interactive-bg-hover-accent":"rgba(42, 161, 152, 0.24)","--dsw-alias-interactive-bg-hover-danger":"rgba(220, 50, 47, 0.16)","--dsw-alias-interactive-bg-hover-solid":"#004052","--dsw-alias-interactive-bg-hover":"rgba(42, 161, 152, 0.10)","--dsw-alias-label-caption":"#657b83","--dsw-alias-label-dimmed":"#586e75","--dsw-alias-label-primary-bluish":"#93a1a1","--dsw-alias-label-primary-dimmed":"#93a1a1","--dsw-alias-label-primary-foreground":"#002b36","--dsw-alias-label-primary-inverted":"#002b36","--dsw-alias-label-primary":"#839496","--dsw-alias-label-secondary":"#93a1a1","--dsw-alias-label-tertiary":"#586e75","--dsw-alias-markdown-citation":"#003847","--dsw-alias-markdown-code-block-banner":"#073642","--dsw-alias-markdown-code-block":"#00212b","--dsw-alias-markdown-code-segment-selected":"#005a6f","--dsw-alias-markdown-code-segment-unselected":"#00212b","--dsw-alias-markdown-inline-code":"#073642","--dsw-alias-markdown-placeholder":"#003847","--dsw-alias-markdown-tag":"#003847","--dsw-alias-scrollbar-bg-l1":"#004052","--dsw-alias-scrollbar-bg-l2":"#005a6f","--dsw-alias-scrollbar-hover-l1":"#005a6f","--dsw-alias-scrollbar-hover-l2":"#2aa198","--dsw-alias-state-business-primary":"#268bd2","--dsw-alias-state-business-tertiary":"#073642","--dsw-alias-state-error-primary":"#dc322f","--dsw-alias-state-error-secondary":"#d33682","--dsw-alias-state-success-primary":"#859900","--dsw-alias-state-success-secondary":"#2aa198","--dsw-alias-state-success-tertiary":"#073642","--dsw-alias-state-warn-label":"#b58900","--dsw-alias-state-warn-primary":"#b58900","--dsw-alias-state-warn-secondary":"#cb4b16","--dsw-alias-state-warn-tertiary":"#073642","--dsw-alias-toast-bg":"#004052","--dsw-alias-tooltip-bg":"#004052","--dsw-specific-bubble-highlight":"#005a6f","--dsw-specific-bubble":"#073642","--dsw-specific-input-major":"#003847","--dsw-specific-login-input":"#002b36","--dsw-specific-menu":"#004052","--dsw-specific-selector":"#005a6f","--dsw-specific-sidebar-fill":"#00212b","--dsw-specific-sidebar-nav-item-active-accent":"#2aa198","--dsw-specific-sidebar-nav-item-active":"#005a6f","--dsw-specific-sidebar-nav-item-hover":"#004052","--dsw-specific-tip":"#003847"}},{"id":"solarized-light","label":"Solarized Light","tokens":{"--dsw-alias-bg-base":"#fdf6e3","--dsw-alias-bg-layer-1":"#fdf6e3","--dsw-alias-bg-layer-2":"#f7f0e0","--dsw-alias-bg-layer-3":"#eee8d5","--dsw-alias-bg-mask-1":"rgba(0, 43, 54, 0.24)","--dsw-alias-bg-mask-2":"rgba(0, 43, 54, 0.12)","--dsw-alias-bg-mask-3":"rgba(0, 43, 54, 0.48)","--dsw-alias-bg-mask-photo":"rgba(0, 43, 54, 0.88)","--dsw-alias-bg-mask-drop":"rgba(253, 246, 227, 0.7)","--dsw-alias-bg-module-platform":"#ddd6c1","--dsw-alias-bg-multi-select":"#eee8d5","--dsw-alias-bg-overlay":"#eee8d5","--dsw-alias-bg-skeleton":"rgba(101, 123, 131, 0.10)","--dsw-alias-border-inverted2":"rgba(88, 110, 117, 0.14)","--dsw-alias-border-inverted":"rgba(88, 110, 117, 0.10)","--dsw-alias-border-l1":"rgba(88, 110, 117, 0.08)","--dsw-alias-border-l2-darkmode-thin":"rgba(88, 110, 117, 0.10)","--dsw-alias-border-l2":"rgba(88, 110, 117, 0.16)","--dsw-alias-border-l3":"rgba(88, 110, 117, 0.22)","--dsw-alias-border-l4":"rgba(88, 110, 117, 0.30)","--dsw-alias-brand-primary-invert":"#b58900","--dsw-alias-brand-primary-new-colorprimary-new-color":"#b58900","--dsw-alias-brand-primary":"#b58900","--dsw-alias-brand-text":"#002b36","--dsw-alias-button-contrast-fill":"#073642","--dsw-alias-button-elevated-fill":"#eee8d5","--dsw-alias-button-floating-fill":"#fdf6e3","--dsw-alias-button-floating-hover":"#eee8d5","--dsw-alias-button-ghost-active-border":"#b58900","--dsw-alias-button-ghost-active-fill":"#dfca88","--dsw-alias-button-ghost-active-hover":"#eee8d5","--dsw-alias-button-info-fill":"#268bd2","--dsw-alias-button-info-hover":"#6c71c4","--dsw-alias-button-primary-dimmed":"#eee8d5","--dsw-alias-button-primary-fill":"#b58900","--dsw-alias-button-primary-hover":"#ac9d57","--dsw-alias-button-tool-bar-fill-invisible":"rgba(0, 43, 54, 0.36)","--dsw-alias-button-tool-bar-fill":"rgba(0, 43, 54, 0.55)","--dsw-alias-button-tool-bar-hover":"rgba(0, 43, 54, 0.6)","--dsw-alias-interactive-bg-active":"rgba(181, 137, 0, 0.16)","--dsw-alias-interactive-bg-hover-accent":"rgba(181, 137, 0, 0.20)","--dsw-alias-interactive-bg-hover-danger":"rgba(220, 50, 47, 0.08)","--dsw-alias-interactive-bg-hover-solid":"#eee8d5","--dsw-alias-interactive-bg-hover":"rgba(181, 137, 0, 0.08)","--dsw-alias-label-caption":"#93a1a1","--dsw-alias-label-dimmed":"#93a1a1","--dsw-alias-label-primary-bluish":"#268bd2","--dsw-alias-label-primary-dimmed":"#839496","--dsw-alias-label-primary-foreground":"#fdf6e3","--dsw-alias-label-primary-inverted":"#002b36","--dsw-alias-label-primary":"#657b83","--dsw-alias-label-secondary":"#586e75","--dsw-alias-label-tertiary":"#93a1a1","--dsw-alias-markdown-citation":"#eee8d5","--dsw-alias-markdown-code-block-banner":"#ddd6c1","--dsw-alias-markdown-code-block":"#eee8d5","--dsw-alias-markdown-code-segment-selected":"#fdf6e3","--dsw-alias-markdown-code-segment-unselected":"#eee8d5","--dsw-alias-markdown-inline-code":"#eee8d5","--dsw-alias-markdown-placeholder":"#ddd6c1","--dsw-alias-markdown-tag":"#ddd6c1","--dsw-alias-scrollbar-bg-l1":"#ddd6c1","--dsw-alias-scrollbar-bg-l2":"#c9bfa4","--dsw-alias-scrollbar-hover-l1":"#c9bfa4","--dsw-alias-scrollbar-hover-l2":"#b8ad8d","--dsw-alias-state-business-primary":"#268bd2","--dsw-alias-state-business-tertiary":"#eee8d5","--dsw-alias-state-error-primary":"#dc322f","--dsw-alias-state-error-secondary":"#d33682","--dsw-alias-state-success-primary":"#859900","--dsw-alias-state-success-secondary":"#2aa198","--dsw-alias-state-success-tertiary":"#eee8d5","--dsw-alias-state-warn-label":"#b58900","--dsw-alias-state-warn-primary":"#b58900","--dsw-alias-state-warn-secondary":"#cb4b16","--dsw-alias-state-warn-tertiary":"#eee8d5","--dsw-alias-toast-bg":"#073642","--dsw-alias-tooltip-bg":"#002b36","--dsw-specific-bubble-highlight":"#dfca88","--dsw-specific-bubble":"#eee8d5","--dsw-specific-input-major":"#fdf6e3","--dsw-specific-login-input":"#f7f0e0","--dsw-specific-menu":"#eee8d5","--dsw-specific-selector":"#dfca88","--dsw-specific-sidebar-fill":"#eee8d5","--dsw-specific-sidebar-nav-item-active-accent":"#b58900","--dsw-specific-sidebar-nav-item-active":"#dfca88","--dsw-specific-sidebar-nav-item-hover":"#eae0c0","--dsw-specific-tip":"#ddd6c1"}}];
 
     function apply(ctx) {
@@ -72,11 +71,12 @@ window.__ModuleLoader__.load({
   }
 
   // ---- Durable scheme → palette mapping ------------------------------------
-  // The harness's settings WIRE serves only a hardcoded namespace allowlist
-  // (`settings-not-exposed` for third-party namespaces), so the mapping cannot
-  // go through the standard settings scope. Persistence runs through this
-  // package's own HTTP route, which reads and writes the same user settings
-  // document on the Host through the Host settings seam.
+  // rc7: the harness settings wire serves every namespace a Host plugin
+  // registers (the old hardcoded allowlist and `settings-not-exposed` are
+  // gone), so the mapping persists through the standard settings scope
+  // (`settingsScope.bind`) instead of this package's private HTTP route. The
+  // scope owns the wire reads, the revision fencing, and the invalidation
+  // subscriptions; this store is a projection of its snapshot.
   const store = {
     status: 'loading', // 'loading' | 'ready' | 'unavailable'
     value: { ...DEFAULT_MAPPING },
@@ -96,58 +96,50 @@ window.__ModuleLoader__.load({
     return { ...store.value }
   }
 
-  function applyServerView(data) {
-    store.status = 'ready'
+  function projectSnapshot(snapshot) {
+    const value = snapshot && snapshot.value
+    store.status = snapshot && snapshot.status ? snapshot.status : 'unavailable'
+    store.revision = snapshot && typeof snapshot.revision === 'number' ? snapshot.revision : undefined
+    store.writable = snapshot ? snapshot.writable === true : false
     store.value = {
-      dark: data && typeof data.value?.dark === 'string' ? data.value.dark : DEFAULT_MAPPING.dark,
-      light: data && typeof data.value?.light === 'string' ? data.value.light : DEFAULT_MAPPING.light,
+      dark: value && typeof value.dark === 'string' ? value.dark : DEFAULT_MAPPING.dark,
+      light: value && typeof value.light === 'string' ? value.light : DEFAULT_MAPPING.light,
     }
-    store.revision = data && typeof data.revision === 'number' ? data.revision : undefined
-    store.writable = data?.writable === true
     notifyStore()
   }
 
-  async function loadMapping() {
+  // The settings surface is composed in every stock web profile; on a
+  // composition without it the mapping stays on the defaults and the settings
+  // card reports "not persisted".
+  let scope = null
+  const binder = ctx.get('settingsScope')
+  if (binder !== undefined) {
     try {
-      const response = await fetch(HTTP_ROUTE, { cache: 'no-store' })
-      if (!response.ok) {
-        if (store.status !== 'unavailable') {
-          store.status = 'unavailable'
-          notifyStore()
-        }
-        return
-      }
-      applyServerView(await response.json())
+      // bind() registers the scope's disposers and its settings-document /
+      // connection invalidation listeners on this fiber, then starts the
+      // initial Host read. It resolves the transport services from this
+      // caller's context, so a composition that lacks them is treated as
+      // "no persistence" rather than a mount failure.
+      scope = binder.bind({ namespace: SETTINGS_NAMESPACE })
     } catch {
-      if (store.status !== 'unavailable') {
-        store.status = 'unavailable'
-        notifyStore()
-      }
+      scope = null
     }
+  }
+  if (scope) {
+    ctx.effect(() => scope.subscribe(() => projectSnapshot(scope.getSnapshot())))
+    projectSnapshot(scope.getSnapshot())
+  } else {
+    store.status = 'unavailable'
   }
 
   function setMapping(scheme, id) {
     if (getMapping()[scheme] === id) return
-    // Optimistic: reflect the choice immediately; the write round-trip (or a
-    // conflict recovery read) reconciles the authoritative value.
+    // Optimistic: reflect the choice immediately; the scope's write
+    // round-trip (or its latest-write recovery read) reconciles the
+    // authoritative value.
     store.value = { ...store.value, [scheme]: id }
     notifyStore()
-    fetch(HTTP_ROUTE, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        ops: [{ op: 'set', path: [scheme], value: id }],
-        ...(store.revision === undefined ? {} : { expectedRevision: store.revision }),
-      }),
-    }).then(async (response) => {
-      if (!response.ok) {
-        await loadMapping()
-        return
-      }
-      applyServerView(await response.json())
-    }).catch(() => {
-      loadMapping().catch(() => {})
-    })
+    if (scope) scope.set(scheme, id).catch(() => {})
   }
 
   // Provide the public service (disposer owned by the fiber). The mapping
@@ -239,20 +231,10 @@ window.__ModuleLoader__.load({
     notifySettings()
   }))
 
-  // Server-side changes (this package's route or another browser) invalidate
-  // the local copy through the forwarded settings-document event.
-  const remote = ctx.get('remote')
-  if (remote) {
-    ctx.effect(() => remote.$on('settings/document-updated', (ns) => {
-      if (ns !== SETTINGS_NAMESPACE) return
-      loadMapping()
-    }))
-  }
-  ctx.on('connection/reset', () => {
-    loadMapping()
-  })
-  // Initial read; the store starts from the defaults while it is in flight.
-  loadMapping()
+  // Server-side changes (this namespace written from another browser or from
+  // the Host) and reconnects are invalidated by the settingsScope binder
+  // itself — it subscribes to the forwarded settings-document event and to
+  // connection resets on this fiber, so no wiring is needed here.
 
   // Registry changes (register/dispose) re-resolve and refresh the settings UI.
   ctx.effect(() => onRegistryChange(() => {
@@ -270,6 +252,7 @@ window.__ModuleLoader__.load({
   const slots = ctx.get('slots')
   if (slots) {
     registerPaletteSettings(slots, {
+      namespace: SETTINGS_NAMESPACE,
       subscribe: subscribeStore,
       getMapping,
       setMapping,
@@ -586,10 +569,14 @@ window.__ModuleLoader__.load({
     )
   }
 
+  // rc7 contract: `settings.plugin.item` is a KEYED slot whose key is the
+  // settings namespace the card edits. The Plugin configuration tab dispatches
+  // one entry per namespace the Host serves, so a card registered without the
+  // namespace key is never rendered (this was the rc6 `list`-slot contract,
+  // where `id`/`order` placed the card).
   slots.inject('settings.plugin.item', () => slots.register({
     name: 'settings.plugin.item',
-    id: 'theme-palettes',
-    order: 30,
+    key: deps.namespace,
   }, Card))
 }
 

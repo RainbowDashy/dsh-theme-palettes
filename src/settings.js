@@ -332,9 +332,13 @@ export function registerPaletteSettings(slots, deps) {
     )
   }
 
+  // rc7 contract: `settings.plugin.item` is a KEYED slot whose key is the
+  // settings namespace the card edits. The Plugin configuration tab dispatches
+  // one entry per namespace the Host serves, so a card registered without the
+  // namespace key is never rendered (this was the rc6 `list`-slot contract,
+  // where `id`/`order` placed the card).
   slots.inject('settings.plugin.item', () => slots.register({
     name: 'settings.plugin.item',
-    id: 'theme-palettes',
-    order: 30,
+    key: deps.namespace,
   }, Card))
 }

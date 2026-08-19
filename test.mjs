@@ -4,6 +4,13 @@
 // client bundle, stubs `window.__ModuleLoader__.load`, calls the factory with
 // a fake `require` (returning `{}` for "react" — the UI functions are never
 // invoked), and exercises `apply` against a fake ctx.
+//
+// rc7 persistence model under test: the Host registers the `theme-palettes`
+// settings namespace on the settings seam; the browser half reads and writes
+// it through a `settingsScope` binder (`settingsScope.bind({ namespace })`),
+// which mirrors the real binder's wiring: an initial async read, a reload on
+// the forwarded `settings/document-updated` event and on `connection/reset`,
+// and a `set()` that writes through and publishes the accepted snapshot.
 
 let loaded = null
 globalThis.window = {
@@ -78,29 +85,6 @@ function makeTheme(initialScheme = 'dark', options = {}) {
   return theme
 }
 
-function makeScope(initial = {}) {
-  const data = { ...initial }
-  const listeners = new Set()
-  const scope = {
-    getSnapshot() {
-      return { value: { ...data } }
-    },
-    set(field, value) {
-      if (data[field] === value) return
-      data[field] = value
-      for (const fn of [...listeners]) fn()
-    },
-    subscribe(fn) {
-      listeners.add(fn)
-      return () => listeners.delete(fn)
-    },
-    _emit() {
-      for (const fn of [...listeners]) fn()
-    },
-  }
-  return scope
-}
-
 function makeRemote() {
   const listeners = new Map()
   const remote = {
@@ -121,45 +105,81 @@ function makeRemote() {
   return remote
 }
 
-// ---- fake host route (the /api/theme-palettes surface) ----------------------
-// Installed as globalThis.fetch for the whole run; the client bundle persists
-// through it. Returns a `server` mirror the tests can seed and assert against.
-function installFakeHost(mappingSeed = {}) {
-  const server = {
-    value: { ...mappingSeed },
+// ---- fake settings seam + settingsScope binder ------------------------------
+// `host` is the Host-side settings document (the namespace's resolved value
+// and revision). `makeScopeController` is a faithful-enough `SettingsScope`:
+// a snapshot store whose initial snapshot is `loading`, whose load is
+// deferred (like the real controller's enqueued read), and whose `set`
+// writes through to the host and publishes the accepted snapshot.
+function makeHost(seed = {}) {
+  return {
+    value: { ...seed },
     revision: 1,
     writable: true,
-    posted: [],
   }
-  globalThis.fetch = async (url, options = {}) => {
-    const target = String(url)
-    if (!target.includes('theme-palettes')) {
-      return { ok: false, status: 404, json: async () => ({}) }
-    }
-    if (options.method === 'POST') {
-      const body = JSON.parse(options.body)
-      server.posted.push(body)
-      for (const op of body.ops) {
-        if (op.op === 'set') server.value[op.path[0]] = op.value
-        else delete server.value[op.path[0]]
-      }
-      server.revision += 1
-    }
-    return {
-      ok: true,
-      status: 200,
-      json: async () => ({
-        ok: true,
-        value: { ...server.value },
-        revision: server.revision,
-        writable: server.writable,
-      }),
-    }
-  }
-  return server
 }
 
-const fakeHost = installFakeHost()
+function makeScopeController(host) {
+  const listeners = new Set()
+  const state = {
+    status: 'loading',
+    value: undefined,
+    revision: undefined,
+    writable: host.writable,
+    mode: 'host',
+  }
+  const scope = {
+    getSnapshot() {
+      return { ...state, value: state.value ? { ...state.value } : undefined }
+    },
+    subscribe(fn) {
+      listeners.add(fn)
+      return () => listeners.delete(fn)
+    },
+    async load() {
+      // Deferred like the real controller's enqueued read, so the plugin's
+      // synchronous initial `getSnapshot()` sees the `loading` snapshot.
+      await Promise.resolve()
+      state.value = { ...host.value }
+      state.revision = host.revision
+      state.status = 'ready'
+      for (const fn of [...listeners]) fn()
+    },
+    async set(field, value) {
+      host.value = { ...host.value, [field]: value }
+      host.revision += 1
+      await scope.load()
+    },
+    _emit() {
+      for (const fn of [...listeners]) fn()
+    },
+  }
+  return scope
+}
+
+// Mirrors the real binder's wiring: one bound scope per namespace, reloading
+// on the forwarded settings-document event (only for that namespace) and on
+// connection resets, with the initial read started at bind time.
+function makeBinder(remote, ctx, host) {
+  const binder = {
+    _bound: [],
+    bind(spec) {
+      binder._bound.push(spec)
+      const scope = makeScopeController(host)
+      const refresh = () => scope.load().catch(() => {})
+      remote.$on('settings/document-updated', (ns) => {
+        if (ns !== spec.namespace) return
+        refresh()
+      })
+      ctx.on('connection/reset', () => refresh())
+      refresh()
+      return scope
+    },
+  }
+  return binder
+}
+
+const host = makeHost()
 
 function makeSlots() {
   const registrations = []
@@ -175,15 +195,15 @@ function makeSlots() {
   return slots
 }
 
-function makeCtx({ theme, scope, slots, remote }) {
+function makeCtx({ theme, getBinder, slots, remote }) {
   const events = new Map()
   const provided = {}
   const ctx = {
     theme,
     get(name) {
-      if (name === 'settingsScope') return scope ? { bind: () => scope } : undefined
-      if (name === 'slots') return slots
-      if (name === 'remote') return remote
+      // Absent services read as `undefined` on the real context, never null.
+      if (name === 'settingsScope') return getBinder() ?? undefined
+      if (name === 'slots') return slots ?? undefined
       return undefined
     },
     provide(name, value) {
@@ -225,18 +245,24 @@ function makeCtx({ theme, scope, slots, remote }) {
 }
 
 function setup(options = {}) {
-  const { scheme = 'dark', scopeData = {}, withSlots = true, emitting = false, hostSeed = {} } = options
-  fakeHost.value = { ...hostSeed }
-  fakeHost.posted.length = 0
-  const scope = makeScope(scopeData)
+  const { scheme = 'dark', withSlots = true, withScope = true, emitting = false, hostSeed = {} } = options
+  host.value = { ...hostSeed }
+  host.revision = 1
   const slots = withSlots ? makeSlots() : undefined
   const remote = makeRemote()
-  const ctx = makeCtx({ theme: null, scope, slots, remote })
+  let binder = null
+  const ctx = makeCtx({
+    theme: null,
+    getBinder: () => binder,
+    slots,
+    remote,
+  })
+  if (withScope) binder = makeBinder(remote, ctx, host)
   const theme = makeTheme(scheme, { emit: emitting ? () => ctx.emit('theme/change', theme.getTheme()) : undefined })
   ctx.theme = theme
   mod.apply(ctx)
   const service = ctx._provided.themePalettes
-  return { theme, scope, slots, remote, ctx, service }
+  return { theme, binder, slots, remote, ctx, service }
 }
 
 // ---- load the module and grab exports --------------------------------------
@@ -252,7 +278,7 @@ assert(typeof mod.apply === 'function', 'module exports apply')
 // ---- scenario: initial resolve + built-in registration + slot --------------
 
 await run('built-in palette registered, listed, and applied', () => {
-  const { theme, slots, service } = setup()
+  const { theme, binder, slots, service } = setup()
 
   assert(service, 'themePalettes service provided')
   assertEq(service.list(), [
@@ -270,8 +296,12 @@ await run('built-in palette registered, listed, and applied', () => {
   const reg = slots._registrations.find((r) => r.name === 'settings.plugin.item')
   assert(reg, 'settings.plugin.item slot injected')
   const registered = reg.factory()
-  assertEq(registered.id, 'theme-palettes', 'settings.plugin.item id')
-  assertEq(registered.order, 30, 'settings.plugin.item order')
+  assertEq(registered.key, 'theme-palettes', 'settings.plugin.item key is the settings namespace (rc7 keyed contract)')
+  assert(registered.id === undefined, 'keyed registration carries no list-slot id')
+  assert(registered.order === undefined, 'keyed registration carries no list-slot order')
+
+  assert(binder._bound.length === 1, 'one settings scope bound')
+  assertEq(binder._bound[0].namespace, 'theme-palettes', 'scope binds the settings namespace the card is keyed by')
 })
 
 // ---- scenario: solarized built-ins ------------------------------------------
@@ -329,7 +359,7 @@ await run('duplicate registration throws', () => {
 
 await run('scheme change to light (default) disposes the layer', async () => {
   const { theme, ctx } = setup({ scheme: 'dark', hostSeed: { dark: 'vscode-red' } })
-  await tick() // let the initial GET land the seeded mapping
+  await tick() // let the initial scope read land the seeded mapping
   assertEq(theme._calls.length, 1, 'seeded dark mapping applied a layer')
   assertEq(theme._disposedCount(), 0, 'no disposal before scheme change')
   theme.setScheme('light')
@@ -456,40 +486,14 @@ await run('host schema resolves defaults and preserves user fields', async () =>
   assertEq(registered.schema({}), { dark: 'default', light: 'default' }, 'registered schema resolves defaults')
 })
 
-await run('host op validation accepts only dark/light edits', async () => {
-  const { normalizeOps } = await import('./src/host-schema.js')
-  assertEq(normalizeOps([{ op: 'set', path: ['dark'], value: 'default' }]), [{ op: 'set', path: ['dark'], value: 'default' }], 'valid set op passes through')
-  assertEq(normalizeOps([{ op: 'unset', path: ['light'] }]), [{ op: 'unset', path: ['light'] }], 'valid unset op passes through')
-  for (const bad of [
-    [],
-    [{ op: 'set', path: [] }],
-    [{ op: 'set', path: ['unknown'], value: 'x' }],
-    [{ op: 'set', path: ['dark'], value: 42 }],
-    [{ op: 'merge', path: ['dark'], value: 'x' }],
-    'not-an-array',
-  ]) {
-    let threw = false
-    try {
-      normalizeOps(bad)
-    } catch {
-      threw = true
-    }
-    assert(threw, `normalizeOps rejects ${JSON.stringify(bad)}`)
-  }
-})
+// ---- scenario: persistence through the settings scope -----------------------
 
-// ---- scenario: persistence through the private host route ------------------
-
-await run('mapping writes persist through the host route', async () => {
+await run('mapping writes persist through the settings scope', async () => {
   const { service } = setup({ scheme: 'dark' })
-  await tick() // let the initial GET land the server revision
+  await tick() // let the initial scope read land the host revision
   service.setMapping('light', 'vscode-red')
   await tick()
-  assertEq(fakeHost.value.light, 'vscode-red', 'POST landed the light mapping on the host')
-  const posted = fakeHost.posted[fakeHost.posted.length - 1]
-  assert(posted, 'a POST was sent')
-  assertEq(posted.ops, [{ op: 'set', path: ['light'], value: 'vscode-red' }], 'POST carried the set op')
-  assert(typeof posted.expectedRevision === 'number', 'POST carried the expected revision')
+  assertEq(host.value.light, 'vscode-red', 'scope.set landed the light mapping on the host document')
   assertEq(service.getMapping(), { dark: 'default', light: 'vscode-red' }, 'local mapping reflects the write, dark stays on the stock default')
 })
 
@@ -497,11 +501,32 @@ await run('server-side mapping changes re-resolve the layer', async () => {
   const { theme, remote } = setup({ scheme: 'dark', hostSeed: { dark: 'vscode-red' } })
   await tick()
   assertEq(theme._calls.length, 1, 'seeded mapping applied the initial layer')
-  fakeHost.value.dark = 'default'
-  fakeHost.revision += 1
+  host.value.dark = 'default'
+  host.revision += 1
   remote._emit('settings/document-updated', 'theme-palettes')
   await tick()
   assertEq(theme._disposedCount(), 1, 'server-side dark → default disposes the layer')
+})
+
+await run('connection reset reloads the mapping from the host', async () => {
+  const { theme, ctx } = setup({ scheme: 'dark', hostSeed: { dark: 'vscode-red' } })
+  await tick()
+  assertEq(theme._calls.length, 1, 'seeded mapping applied the initial layer')
+  host.value.dark = 'default'
+  host.revision += 1
+  ctx.emit('connection/reset')
+  await tick()
+  assertEq(theme._disposedCount(), 1, 'reconnect reload disposed the layer for dark → default')
+})
+
+// ---- scenario: composition without the settings surface ---------------------
+
+await run('without the settings surface the store is unavailable but the plugin still works', () => {
+  const { service, theme } = setup({ scheme: 'dark', withScope: false })
+  assertEq(service.getMapping(), { dark: 'default', light: 'default' }, 'mapping stays on the defaults')
+  service.setMapping('dark', 'vscode-red')
+  assertEq(theme._calls.length, 1, 'the override layer still applies without persistence')
+  assertEq(theme._calls[0].source, 'theme-palettes', 'override layer source')
 })
 
 // ---- scenario: third-party registration ------------------------------------

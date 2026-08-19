@@ -10,10 +10,10 @@
 // The plugin provides a `themePalettes` service (a palette registry with
 // built-in VSCode Red, Solarized Dark, and Solarized Light palettes) and a
 // runtime core that maps the resolved color
-// scheme (light/dark) to a palette id via a persisted mapping (host-backed
-// through this package's own HTTP route — the settings wire refuses
-// third-party namespaces), then stacks that palette's tokens as a
-// `theme.overrideTokens` layer.
+// scheme (light/dark) to a palette id via a persisted mapping (the Host
+// registers the `theme-palettes` settings namespace, which the rc7 settings
+// wire serves to the browser through the standard `settingsScope`), then
+// stacks that palette's tokens as a `theme.overrideTokens` layer.
 
 import { PALETTES } from './palettes.js'
 import { registerPaletteSettings } from './settings.js'
@@ -22,9 +22,6 @@ export const SERVICE_NAME = 'themePalettes'
 export const SETTINGS_NAMESPACE = 'theme-palettes'
 export const LAYER_SOURCE = 'theme-palettes'
 export const DEFAULT_MAPPING = { dark: 'default', light: 'default' }
-// Mirrors the Host-side HTTP_ROUTE in src/host-schema.js (the client bundle
-// cannot import the host module).
-export const HTTP_ROUTE = '/api/theme-palettes'
 
 export const inject = ['theme']
 
@@ -85,11 +82,12 @@ export function apply(ctx) {
   }
 
   // ---- Durable scheme → palette mapping ------------------------------------
-  // The harness's settings WIRE serves only a hardcoded namespace allowlist
-  // (`settings-not-exposed` for third-party namespaces), so the mapping cannot
-  // go through the standard settings scope. Persistence runs through this
-  // package's own HTTP route, which reads and writes the same user settings
-  // document on the Host through the Host settings seam.
+  // rc7: the harness settings wire serves every namespace a Host plugin
+  // registers (the old hardcoded allowlist and `settings-not-exposed` are
+  // gone), so the mapping persists through the standard settings scope
+  // (`settingsScope.bind`) instead of this package's private HTTP route. The
+  // scope owns the wire reads, the revision fencing, and the invalidation
+  // subscriptions; this store is a projection of its snapshot.
   const store = {
     status: 'loading', // 'loading' | 'ready' | 'unavailable'
     value: { ...DEFAULT_MAPPING },
@@ -109,58 +107,50 @@ export function apply(ctx) {
     return { ...store.value }
   }
 
-  function applyServerView(data) {
-    store.status = 'ready'
+  function projectSnapshot(snapshot) {
+    const value = snapshot && snapshot.value
+    store.status = snapshot && snapshot.status ? snapshot.status : 'unavailable'
+    store.revision = snapshot && typeof snapshot.revision === 'number' ? snapshot.revision : undefined
+    store.writable = snapshot ? snapshot.writable === true : false
     store.value = {
-      dark: data && typeof data.value?.dark === 'string' ? data.value.dark : DEFAULT_MAPPING.dark,
-      light: data && typeof data.value?.light === 'string' ? data.value.light : DEFAULT_MAPPING.light,
+      dark: value && typeof value.dark === 'string' ? value.dark : DEFAULT_MAPPING.dark,
+      light: value && typeof value.light === 'string' ? value.light : DEFAULT_MAPPING.light,
     }
-    store.revision = data && typeof data.revision === 'number' ? data.revision : undefined
-    store.writable = data?.writable === true
     notifyStore()
   }
 
-  async function loadMapping() {
+  // The settings surface is composed in every stock web profile; on a
+  // composition without it the mapping stays on the defaults and the settings
+  // card reports "not persisted".
+  let scope = null
+  const binder = ctx.get('settingsScope')
+  if (binder !== undefined) {
     try {
-      const response = await fetch(HTTP_ROUTE, { cache: 'no-store' })
-      if (!response.ok) {
-        if (store.status !== 'unavailable') {
-          store.status = 'unavailable'
-          notifyStore()
-        }
-        return
-      }
-      applyServerView(await response.json())
+      // bind() registers the scope's disposers and its settings-document /
+      // connection invalidation listeners on this fiber, then starts the
+      // initial Host read. It resolves the transport services from this
+      // caller's context, so a composition that lacks them is treated as
+      // "no persistence" rather than a mount failure.
+      scope = binder.bind({ namespace: SETTINGS_NAMESPACE })
     } catch {
-      if (store.status !== 'unavailable') {
-        store.status = 'unavailable'
-        notifyStore()
-      }
+      scope = null
     }
+  }
+  if (scope) {
+    ctx.effect(() => scope.subscribe(() => projectSnapshot(scope.getSnapshot())))
+    projectSnapshot(scope.getSnapshot())
+  } else {
+    store.status = 'unavailable'
   }
 
   function setMapping(scheme, id) {
     if (getMapping()[scheme] === id) return
-    // Optimistic: reflect the choice immediately; the write round-trip (or a
-    // conflict recovery read) reconciles the authoritative value.
+    // Optimistic: reflect the choice immediately; the scope's write
+    // round-trip (or its latest-write recovery read) reconciles the
+    // authoritative value.
     store.value = { ...store.value, [scheme]: id }
     notifyStore()
-    fetch(HTTP_ROUTE, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        ops: [{ op: 'set', path: [scheme], value: id }],
-        ...(store.revision === undefined ? {} : { expectedRevision: store.revision }),
-      }),
-    }).then(async (response) => {
-      if (!response.ok) {
-        await loadMapping()
-        return
-      }
-      applyServerView(await response.json())
-    }).catch(() => {
-      loadMapping().catch(() => {})
-    })
+    if (scope) scope.set(scheme, id).catch(() => {})
   }
 
   // Provide the public service (disposer owned by the fiber). The mapping
@@ -252,20 +242,10 @@ export function apply(ctx) {
     notifySettings()
   }))
 
-  // Server-side changes (this package's route or another browser) invalidate
-  // the local copy through the forwarded settings-document event.
-  const remote = ctx.get('remote')
-  if (remote) {
-    ctx.effect(() => remote.$on('settings/document-updated', (ns) => {
-      if (ns !== SETTINGS_NAMESPACE) return
-      loadMapping()
-    }))
-  }
-  ctx.on('connection/reset', () => {
-    loadMapping()
-  })
-  // Initial read; the store starts from the defaults while it is in flight.
-  loadMapping()
+  // Server-side changes (this namespace written from another browser or from
+  // the Host) and reconnects are invalidated by the settingsScope binder
+  // itself — it subscribes to the forwarded settings-document event and to
+  // connection resets on this fiber, so no wiring is needed here.
 
   // Registry changes (register/dispose) re-resolve and refresh the settings UI.
   ctx.effect(() => onRegistryChange(() => {
@@ -283,6 +263,7 @@ export function apply(ctx) {
   const slots = ctx.get('slots')
   if (slots) {
     registerPaletteSettings(slots, {
+      namespace: SETTINGS_NAMESPACE,
       subscribe: subscribeStore,
       getMapping,
       setMapping,

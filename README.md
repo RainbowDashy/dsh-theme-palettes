@@ -110,13 +110,15 @@ Changes apply live and persist as a flat section of the user's settings document
 
 Defaults are `dark: default`, `light: default` — the same as an absent section. A value referencing an unregistered id behaves as `default` and is shown as "(unavailable)" in the dropdown.
 
-### Why a private route instead of the settings wire?
+### Why the standard settings surface (rc7)
 
-The harness's browser settings **wire** (`settings.describe` / `settings.mutate`) serves only a hardcoded namespace allowlist (`WEB_SETTINGS_NAMESPACES` in `dsh-host-apiproxy`) and refuses third-party namespaces with `settings-not-exposed` — exposing a registered namespace is deferred harness work. This package therefore persists through its own HTTP surface instead:
+rc7 removed the harness's hardcoded settings-namespace allowlist: the settings wire now serves **every** namespace a Host plugin registers (`settings-not-exposed` is gone). This package therefore uses the standard surface end to end:
 
-- The **host half** registers the `theme-palettes` namespace on the host settings seam (so writes land in the same user settings document as first-party namespaces) and serves a private route, `GET/POST /api/theme-palettes`, backed by that seam.
-- The **browser half** reads and writes that route and refreshes through the forwarded `settings/document-updated` event, so changes from another browser or from the host stay live.
-- The route runs on the same webserver and origin as the harness UI (loopback-only deployment is unchanged: settings are host-local in that shape, exactly like the standard settings RPC).
+- The **host half** registers the `theme-palettes` namespace on the Host settings seam, so writes land in the same user settings document as first-party namespaces and the wire exposes the namespace to the browser.
+- The **browser half** binds the namespace through the standard `settingsScope` service. The scope owns the wire reads, the revision fencing on writes, and the invalidation subscriptions (`settings/document-updated` and reconnects), so changes from another browser or from the host stay live.
+- The Plugin configuration tab dispatches one card per served namespace, matching cards to namespaces by key. The "Theme palettes" card is registered under the `theme-palettes` key — the namespace above — which is what pairs the two and makes the card appear.
+
+(On rc6 and earlier, the wire refused third-party namespaces, so this package persisted through its own `/api/theme-palettes` HTTP route. That route is gone: the standard wire is the supported surface, and the private route no longer exists.)
 
 ## Third-party authors
 
@@ -150,10 +152,10 @@ A palette is pure data. Register it through the `themePalettes` service:
 Hand-edited sources live in `src/`:
 
 - [`src/palettes.js`](./src/palettes.js) — the palette catalog (the built-in palettes and helpers).
-- [`src/client.js`](./src/client.js) — the runtime: the `themePalettes` service, the mapping store, and the override layer.
-- [`src/settings.js`](./src/settings.js) — the "Theme palettes" plugin-configuration card UI.
-- [`src/host.js`](./src/host.js) — the host half: settings-namespace registration plus the `/api/theme-palettes` route.
-- [`src/host-schema.js`](./src/host-schema.js) — the dependency-free namespace contract (schema, route, op validation).
+- [`src/client.js`](./src/client.js) — the runtime: the `themePalettes` service, the mapping store (a projection of the `settingsScope` snapshot for the `theme-palettes` namespace), and the override layer.
+- [`src/settings.js`](./src/settings.js) — the "Theme palettes" plugin-configuration card UI (registered into `settings.plugin.item` under the namespace key).
+- [`src/host.js`](./src/host.js) — the host half: the `theme-palettes` settings-namespace registration.
+- [`src/host-schema.js`](./src/host-schema.js) — the dependency-free namespace contract (schema and registration).
 
 Regenerate the artifacts with:
 
